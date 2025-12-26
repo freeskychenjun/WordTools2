@@ -1,7 +1,7 @@
-using DocumentFormat.OpenXml.Packaging;
-using DocumentFormat.OpenXml.Wordprocessing;
+using NPOI.XWPF.UserModel;
 using WordTools2.Models;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace WordTools2.Services
 {
@@ -12,7 +12,7 @@ namespace WordTools2.Services
     {
         private string? _originalFilePath; // 原始文件路径（永远不被修改）
         private string? _workingFilePath;   // 工作文件路径（可以修改）
-        private WordprocessingDocument? _document;
+        private XWPFDocument? _document;
 
         public DocumentService() { }
 
@@ -26,7 +26,11 @@ namespace WordTools2.Services
                 CloseDocument();
                 _originalFilePath = filePath;
                 _workingFilePath = null; // 初始时没有工作文件
-                _document = WordprocessingDocument.Open(filePath, false);
+                
+                using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                {
+                    _document = new XWPFDocument(fileStream);
+                }
                 return true;
             }
             catch (Exception ex)
@@ -40,8 +44,15 @@ namespace WordTools2.Services
         /// </summary>
         public void CloseDocument()
         {
-            _document?.Dispose();
-            _document = null;
+            if (_document != null)
+            {
+                try
+                {
+                    _document.Close();
+                }
+                catch { }
+                _document = null;
+            }
             
             // 清理工作文件（如果存在）
             if (_workingFilePath != null && File.Exists(_workingFilePath))
@@ -81,58 +92,39 @@ namespace WordTools2.Services
                 try
                 {
                     // 关闭原始文档的只读引用
-                    _document?.Dispose();
-                    _document = null;
-
-                    using (var doc = WordprocessingDocument.Open(_workingFilePath, true))
+                    if (_document != null)
                     {
-                        var mainPart = doc.MainDocumentPart;
-                        if (mainPart == null)
-                            throw new Exception("无法获取文档主体部分");
+                        _document.Close();
+                        _document = null;
+                    }
 
-                        var stylesPart = mainPart.StyleDefinitionsPart;
-                        if (stylesPart == null)
-                        {
-                            stylesPart = mainPart.AddNewPart<StyleDefinitionsPart>();
-                            stylesPart.Styles = new Styles();
-                        }
+                    using (var fileStream = new FileStream(_workingFilePath, FileMode.Open, FileAccess.ReadWrite))
+                    {
+                        var doc = new XWPFDocument(fileStream);
+                        
+                        logMessage("开始直接修改段落格式（不修改样式定义）");
+                        
+                        // 诊断：检查原始文档的样式定义
+                        CheckOriginalDocumentStyles(logMessage);
 
-                        var styles = stylesPart.Styles;
-                        if (styles == null)
-                            throw new Exception("无法获取样式定义");
-
-                        UpdateOrCreateStyle(styles, "Heading1", config.Heading1);
-                        UpdateOrCreateStyle(styles, "Heading2", config.Heading2);
-                        UpdateOrCreateStyle(styles, "Heading3", config.Heading3);
-                        UpdateOrCreateStyle(styles, "Heading4", config.Heading4);
-                        UpdateOrCreateStyle(styles, "Normal", config.Normal);
-
-                        stylesPart.Styles?.Save();
-                        logMessage("样式定义已更新");
-
-                        var paragraphs = mainPart.Document.Descendants<Paragraph>().ToList();
+                        var paragraphs = doc.Paragraphs.ToList();
                         int total = paragraphs.Count;
                         int processed = 0;
 
                         foreach (var paragraph in paragraphs)
                         {
-                            // 首先尝试根据大纲级别推断样式
+                            // 通过正则表达式识别段落样式类型
                             var inferredStyle = InferStyleFromParagraph(paragraph, config);
                             
-                            // 如果大纲级别在0-4范围内，应用对应的格式（不修改样式）
+                            // 应用识别出的样式格式
                             if (!string.IsNullOrEmpty(inferredStyle))
                             {
                                 var style = GetParagraphStyle(inferredStyle, config);
                                 if (style != null)
                                 {
-                                    ApplyStyleToParagraph(paragraph, style);
-                                    logMessage($"处理段落格式: {inferredStyle} (大纲级别 {GetOutlineLevelFromStyleName(inferredStyle)})");
+                                    ApplyStyleToParagraph(paragraph, style, inferredStyle, logMessage);
+                                    logMessage($"处理段落格式: {inferredStyle}");
                                 }
-                            }
-                            // 如果返回null，说明大纲级别是5-9级，保持不变
-                            else
-                            {
-                                logMessage($"跳过段落: 大纲级别5-9级，维持原样");
                             }
 
                             processed++;
@@ -143,12 +135,22 @@ namespace WordTools2.Services
                             }
                         }
 
-                        mainPart.Document.Save();
+                        // 确保所有更改都提交到文档
+                        using (var output = new FileStream(_workingFilePath, FileMode.Create, FileAccess.Write))
+                        {
+                            doc.Write(output);
+                        }
+                        doc.Close();
+                        
                         logMessage($"已处理 {total} 个段落");
+                        logMessage("文档已保存，所有格式更改已提交");
                     }
 
                     // 重新打开处理后的工作文件（只读模式）
-                    _document = WordprocessingDocument.Open(_workingFilePath, false);
+                    using (var fileStream = new FileStream(_workingFilePath, FileMode.Open, FileAccess.Read))
+                    {
+                        _document = new XWPFDocument(fileStream);
+                    }
 
                     updateProgress("处理完成");
                     logMessage("样式应用成功（原始文档未被修改）");
@@ -193,8 +195,11 @@ namespace WordTools2.Services
                 }
 
                 // 关闭文档以释放文件锁
-                _document?.Dispose();
-                _document = null;
+                if (_document != null)
+                {
+                    _document.Close();
+                    _document = null;
+                }
                 
                 // 复制源文件到新位置
                 File.Copy(sourcePath, newPath, true);
@@ -202,11 +207,17 @@ namespace WordTools2.Services
                 // 重新打开源文件（只读模式）
                 if (_workingFilePath != null && File.Exists(_workingFilePath))
                 {
-                    _document = WordprocessingDocument.Open(_workingFilePath, false);
+                    using (var fileStream = new FileStream(_workingFilePath, FileMode.Open, FileAccess.Read))
+                    {
+                        _document = new XWPFDocument(fileStream);
+                    }
                 }
                 else
                 {
-                    _document = WordprocessingDocument.Open(_originalFilePath, false);
+                    using (var fileStream = new FileStream(_originalFilePath, FileMode.Open, FileAccess.Read))
+                    {
+                        _document = new XWPFDocument(fileStream);
+                    }
                 }
             }
             catch (Exception ex)
@@ -216,136 +227,52 @@ namespace WordTools2.Services
         }
 
         /// <summary>
-        /// 获取文档统计信息（基于大纲级别，显示0-9级统计）
+        /// 获取文档统计信息（基于文本格式识别）
         /// </summary>
         public Dictionary<string, int> GetDocumentStats()
         {
             var stats = new Dictionary<string, int>
             {
-                { "Normal", 0 },      // 正文文本（大纲级别0）
+                { "Normal", 0 },      // 正文文本
                 { "Heading1", 0 },    // 1级标题
                 { "Heading2", 0 },    // 2级标题
                 { "Heading3", 0 },    // 3级标题
                 { "Heading4", 0 },    // 4级标题
-                { "Level5", 0 },      // 5级（保持不变）
-                { "Level6", 0 },      // 6级（保持不变）
-                { "Level7", 0 },      // 7级（保持不变）
-                { "Level8", 0 },      // 8级（保持不变）
-                { "Level9", 0 },      // 9级（保持不变）
-                { "NoLevel", 0 }      // 无大纲级别
+                { "Other", 0 }        // 其他格式
             };
 
-            if (_document == null || _document.MainDocumentPart == null)
+            if (_document == null)
                 return stats;
 
-            // 获取样式定义，用于解析继承的大纲级别
-            var styleDefinitions = new Dictionary<string, Style>();
-            var stylesPart = _document.MainDocumentPart.StyleDefinitionsPart;
-            if (stylesPart != null && stylesPart.Styles != null)
+            foreach (var paragraph in _document.Paragraphs)
             {
-                foreach (var style in stylesPart.Styles.Elements<Style>())
-                {
-                    if (style.StyleId != null && style.StyleId.Value != null)
-                    {
-                        styleDefinitions[style.StyleId.Value] = style;
-                    }
-                }
-            }
-
-            foreach (var paragraph in _document.MainDocumentPart.Document.Descendants<Paragraph>())
-            {
-                // 1. 先检查直接的大纲级别
-                int? outlineLevel = null;
-                var paragraphProperties = paragraph.ParagraphProperties;
+                // 获取段落文本
+                var text = paragraph.ParagraphText.Trim();
                 
-                if (paragraphProperties != null)
+                // 基于文本格式判断
+                if (string.IsNullOrEmpty(text))
                 {
-                    var outlineLevelElement = paragraphProperties.GetFirstChild<OutlineLevel>();
-                    if (outlineLevelElement != null && outlineLevelElement.Val != null)
-                    {
-                        if (int.TryParse(outlineLevelElement.Val.InnerText, out int level))
-                        {
-                            outlineLevel = level;
-                        }
-                    }
-                    
-                    // 2. 如果没有直接的大纲级别，检查样式
-                    if (outlineLevel == null)
-                    {
-                        var styleId = paragraphProperties.ParagraphStyleId?.Val?.Value;
-                        if (styleId != null && styleDefinitions.TryGetValue(styleId, out Style style))
-                        {
-                            // 检查样式名称是否包含"heading"（不区分大小写）
-                            var styleName = style.GetFirstChild<StyleName>()?.Val?.Value ?? "";
-                            if (styleName.IndexOf("heading", StringComparison.OrdinalIgnoreCase) >= 0)
-                            {
-                                // 根据样式名称推断大纲级别
-                                if (styleName.IndexOf("1", StringComparison.OrdinalIgnoreCase) >= 0)
-                                {
-                                    outlineLevel = 1;
-                                }
-                                else if (styleName.IndexOf("2", StringComparison.OrdinalIgnoreCase) >= 0)
-                                {
-                                    outlineLevel = 2;
-                                }
-                                else if (styleName.IndexOf("3", StringComparison.OrdinalIgnoreCase) >= 0)
-                                {
-                                    outlineLevel = 3;
-                                }
-                                else if (styleName.IndexOf("4", StringComparison.OrdinalIgnoreCase) >= 0)
-                                {
-                                    outlineLevel = 4;
-                                }
-                                else
-                                {
-                                    // 默认视为1级标题
-                                    outlineLevel = 1;
-                                }
-                            }
-                            else
-                            {
-                                // 检查样式是否有OutlineLevel设置
-                                var styleParagraphProps = style.GetFirstChild<ParagraphProperties>();
-                                if (styleParagraphProps != null)
-                                {
-                                    var styleOutlineLevel = styleParagraphProps.GetFirstChild<OutlineLevel>();
-                                    if (styleOutlineLevel != null && styleOutlineLevel.Val != null)
-                                    {
-                                        if (int.TryParse(styleOutlineLevel.Val.InnerText, out int level))
-                                        {
-                                            outlineLevel = level;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    stats["Normal"]++;
                 }
-
-                // 3. 根据大纲级别统计
-                if (outlineLevel.HasValue)
+                else if (Regex.IsMatch(text, @"^[1-9]\d?\s+[\u4e00-\u9fa5]+$"))
                 {
-                    string category = outlineLevel.Value switch
-                    {
-                        0 => "Normal",    // 正文文本
-                        1 => "Heading1",  // 1级标题
-                        2 => "Heading2",  // 2级标题
-                        3 => "Heading3",  // 3级标题
-                        4 => "Heading4",  // 4级标题
-                        5 => "Level5",    // 5级（保持不变）
-                        6 => "Level6",    // 6级（保持不变）
-                        7 => "Level7",    // 7级（保持不变）
-                        8 => "Level8",    // 8级（保持不变）
-                        9 => "Level9",    // 9级（保持不变）
-                        _ => "Normal"     // 其他级别视为正文
-                    };
-                    
-                    stats[category]++;
+                    stats["Heading1"]++; // 一级标题格式：单个数字+空格+中文内容
+                }
+                else if (Regex.IsMatch(text, @"^[1-9]\d?\.[1-9]\d?\s*[\u4e00-\u9fa5]+$"))
+                {
+                    stats["Heading2"]++; // 二级标题格式：数字.数字+空格/中文内容
+                }
+                else if (Regex.IsMatch(text, @"^[1-9]\d?\.[1-9]\d?\.[1-9]\d?\s*[\u4e00-\u9fa5]+$"))
+                {
+                    stats["Heading3"]++; // 三级标题格式：数字.数字.数字+空格/中文内容
+                }
+                else if (Regex.IsMatch(text, @"^[1-9]\d?\.[1-9]\d?\.[1-9]\d?\.[1-9]\d?\s*[\u4e00-\u9fa5]+$"))
+                {
+                    stats["Heading4"]++; // 四级标题格式：数字.数字.数字.数字+空格/中文内容
                 }
                 else
                 {
-                    // 没有大纲级别的
-                    stats["NoLevel"]++;
+                    stats["Other"]++; // 其他格式
                 }
             }
 
@@ -373,465 +300,332 @@ namespace WordTools2.Services
         /// <summary>
         /// 更新或创建样式定义
         /// </summary>
-        private void UpdateOrCreateStyle(Styles styles, string styleId, ParagraphStyle styleConfig)
+
+
+        /// <summary>
+        /// 直接修改段落格式（不修改样式定义）
+        /// 只修改当前段落的字体、字号、间距、大纲级别等属性
+        /// </summary>
+        private void ApplyStyleToParagraph(XWPFParagraph paragraph, ParagraphStyle styleConfig, string styleName, Action<string> logMessage)
         {
-            var style = styles.Elements<Style>().FirstOrDefault(s => s.StyleId?.Value == styleId);
+            // 首先获取段落文本用于调试
+            var text = paragraph.ParagraphText.Trim();
 
-            if (style == null)
+            // 设置大纲级别和格式
+            SetOutlineLevelForParagraph(paragraph, styleName, logMessage);
+
+            // 设置段落间距
+            var paraCTP2 = paragraph.GetCTP();
+            if (paraCTP2.pPr == null)
             {
-                style = new Style()
-                {
-                    Type = StyleValues.Paragraph,
-                    StyleId = styleId
-                };
-
-                var styleName = new StyleName() { Val = styleId };
-                style.Append(styleName);
-
-                var basedOn = new BasedOn() { Val = "Normal" };
-                style.Append(basedOn);
-
-                var nextParagraphStyle = new NextParagraphStyle() { Val = "Normal" };
-                style.Append(nextParagraphStyle);
-
-                styles.Append(style);
+                paraCTP2.AddNewPPr();
+            }
+            if (paraCTP2.pPr.spacing == null)
+            {
+                paraCTP2.pPr.spacing = new NPOI.OpenXmlFormats.Wordprocessing.CT_Spacing();
             }
 
-            var runProperties = style.GetFirstChild<RunProperties>();
-            if (runProperties == null)
+            paraCTP2.pPr.spacing.before = (ulong)(styleConfig.SpaceBefore * 20); // NPOI使用缇单位
+            paraCTP2.pPr.spacing.after = (ulong)(styleConfig.SpaceAfter * 20); // NPOI使用缇单位
+            
+            // 只对正文段落设置行距，标题段落保持原有行距
+            if (styleName == "Normal" && styleConfig.LineSpacing > 0)
             {
-                runProperties = new RunProperties();
-                style.Append(runProperties);
+                paraCTP2.pPr.spacing.line = ((int)(styleConfig.LineSpacing * 20)).ToString(); // NPOI使用缇单位
+                paraCTP2.pPr.spacing.lineRule = NPOI.OpenXmlFormats.Wordprocessing.ST_LineSpacingRule.exact;
+            }
+
+            // 设置段落中所有运行的字体属性
+            foreach (var run in paragraph.Runs)
+            {
+                var runCTR = run.GetCTR();
+                if (runCTR.rPr == null)
+                {
+                    runCTR.AddNewRPr();
+                }
+
+                // 设置字体
+                if (runCTR.rPr.rFonts == null)
+                {
+                    runCTR.rPr.rFonts = new NPOI.OpenXmlFormats.Wordprocessing.CT_Fonts();
+                }
+                
+                // 所有段落（包括标题和正文）都采用相同的中英文字体处理方式
+                // 中文字符保持用户设置的字体，英文和数字使用Times New Roman
+                runCTR.rPr.rFonts.eastAsia = styleConfig.FontName;      // 中文字符使用用户设置的字体
+                runCTR.rPr.rFonts.ascii = "Times New Roman";              // 英文字符使用Times New Roman
+                runCTR.rPr.rFonts.hAnsi = "Times New Roman";              // 英文字符使用Times New Roman
+                runCTR.rPr.rFonts.cs = "Times New Roman";                 // 复杂脚本使用Times New Roman
+                
+                // 记录字体设置信息
+                string styleType = GetStyleTypeFromConfig(styleConfig);
+                logMessage($"{styleType}字体设置：中文={styleConfig.FontName}, 英文/数字=Times New Roman");
+
+                // 设置字体大小
+                if (runCTR.rPr.sz == null)
+                {
+                    runCTR.rPr.sz = new NPOI.OpenXmlFormats.Wordprocessing.CT_HpsMeasure();
+                }
+                runCTR.rPr.sz.val = (ulong)(styleConfig.FontSize * 2); // NPOI使用半点单位
+
+                if (runCTR.rPr.szCs == null)
+                {
+                    runCTR.rPr.szCs = new NPOI.OpenXmlFormats.Wordprocessing.CT_HpsMeasure();
+                }
+                runCTR.rPr.szCs.val = (ulong)(styleConfig.FontSize * 2); // NPOI使用半点单位
+            }
+
+            // 调试信息：记录应用的格式（简化正文段落显示）
+            string finalStyleType = GetStyleTypeFromConfig(styleConfig);
+            string displayText = text;
+            
+            // 对于正文段落，只显示前50个字符以减少日志负担
+            if (styleName == "Normal" && text.Length > 50)
+            {
+                displayText = text.Substring(0, 50) + "...";
             }
             
-            var runFonts = runProperties.GetFirstChild<RunFonts>();
-            if (runFonts == null)
-            {
-                runFonts = new RunFonts();
-                runProperties.Append(runFonts);
-            }
-            runFonts.Ascii = styleConfig.FontName;
-            runFonts.HighAnsi = styleConfig.FontName;
-            runFonts.EastAsia = styleConfig.FontName;
-
-            var fontSize = runProperties.GetFirstChild<FontSize>();
-            if (fontSize == null)
-            {
-                fontSize = new FontSize();
-                runProperties.Append(fontSize);
-            }
-            fontSize.Val = ConvertFontSizeToHalfPoints(styleConfig.FontSize);
-
-            var paragraphProperties = style.GetFirstChild<ParagraphProperties>();
-            if (paragraphProperties == null)
-            {
-                paragraphProperties = new ParagraphProperties();
-                style.Append(paragraphProperties);
-            }
-
-            var spacing = paragraphProperties.GetFirstChild<SpacingBetweenLines>();
-            if (spacing == null)
-            {
-                spacing = new SpacingBetweenLines();
-                paragraphProperties.Append(spacing);
-            }
-            spacing.Before = ConvertPointsToTwips(styleConfig.SpaceBefore);
-            spacing.After = ConvertPointsToTwips(styleConfig.SpaceAfter);
+            logMessage($"应用格式到段落: [{finalStyleType}] 文字:\"{displayText}\" 字体:{styleConfig.FontName} 字号:{styleConfig.FontSize} 段前距:{styleConfig.SpaceBefore} 段后距:{styleConfig.SpaceAfter}");
         }
 
         /// <summary>
-        /// 应用格式到单个段落（不修改样式，直接应用格式属性）
+        /// 检查原始文档的样式定义，诊断大纲级别问题
         /// </summary>
-        private void ApplyStyleToParagraph(Paragraph paragraph, ParagraphStyle styleConfig)
+        private void CheckOriginalDocumentStyles(Action<string> logMessage)
         {
-            var properties = paragraph.ParagraphProperties ?? new ParagraphProperties();
-
-            // 不修改样式ID，保持原有样式不变
-            // var styleId = properties.ParagraphStyleId ?? new ParagraphStyleId();
-            // styleId.Val = GetStyleIdForParagraphStyle(styleConfig);
-            // properties.ParagraphStyleId = styleId;
-
-            // 不设置大纲级别，保持原有大纲级别
-            // var outlineLevel = properties.GetFirstChild<OutlineLevel>();
-            // if (outlineLevel == null)
-            // {
-            //     outlineLevel = new OutlineLevel();
-            //     properties.Append(outlineLevel);
-            // }
-            // 
-            // // 根据样式设置对应的大纲级别
-            // var targetLevel = GetOutlineLevelForStyle(styleId.Val?.Value ?? "Normal");
-            // outlineLevel.Val = targetLevel;
-
-            var spacing = properties.GetFirstChild<SpacingBetweenLines>();
-            if (spacing == null)
+            try
             {
-                spacing = new SpacingBetweenLines();
-                properties.Append(spacing);
-            }
-            spacing.Before = ConvertPointsToTwips(styleConfig.SpaceBefore);
-            spacing.After = ConvertPointsToTwips(styleConfig.SpaceAfter);
-            
-            // 设置行距
-            if (styleConfig.LineSpacing > 0)
-            {
-                spacing.LineRule = LineSpacingRuleValues.Exact;
-                spacing.Line = ConvertPointsToTwips(styleConfig.LineSpacing);
-            }
-
-            paragraph.ParagraphProperties = properties;
-
-            foreach (var run in paragraph.Elements<Run>())
-            {
-                var runProperties = run.RunProperties ?? new RunProperties();
-
-                var runFonts = runProperties.GetFirstChild<RunFonts>();
-                if (runFonts == null)
+                if (_document != null)
                 {
-                    runFonts = new RunFonts();
-                    runProperties.Append(runFonts);
+                    logMessage("=== 原始文档样式诊断 ===");
+                    logMessage("NPOI不直接提供样式定义访问接口，跳过样式诊断");
+                    logMessage("=== 样式诊断完成 ===");
                 }
-                runFonts.Ascii = styleConfig.FontName;
-                runFonts.HighAnsi = styleConfig.FontName;
-                runFonts.EastAsia = styleConfig.FontName;
-
-                var fontSize = runProperties.GetFirstChild<FontSize>();
-                if (fontSize == null)
-                {
-                    fontSize = new FontSize();
-                    runProperties.Append(fontSize);
-                }
-                fontSize.Val = ConvertFontSizeToHalfPoints(styleConfig.FontSize);
-
-                run.RunProperties = runProperties;
+            }
+            catch (Exception ex)
+            {
+                logMessage($"样式诊断出错: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// 根据段落的大纲级别、样式名称、字体大小或文本格式推断样式类型（仅对0-4级进行处理，其他级别保持不变）
+        /// 根据段落文本格式推断样式类型（通过正则表达式识别标题编号）
         /// </summary>
-        private string? InferStyleFromParagraph(Paragraph paragraph, StyleConfig config)
+        private string InferStyleFromParagraph(XWPFParagraph paragraph, StyleConfig config)
         {
-            var paragraphProperties = paragraph.ParagraphProperties;
-            
             // 获取段落文本
-            string text = string.Join("", paragraph.Descendants<Run>().Select(r => r.InnerText)).Trim();
-            
-            if (paragraphProperties != null)
+            var text = paragraph.ParagraphText.Trim();
+            if (string.IsNullOrEmpty(text))
             {
-                // 1. 先检查直接的大纲级别
-                int? outlineLevel = null;
-                var outlineLevelElement = paragraphProperties.GetFirstChild<OutlineLevel>();
-                if (outlineLevelElement != null)
-                {
-                    if (int.TryParse(outlineLevelElement.Val?.InnerText, out int level))
-                    {
-                        outlineLevel = level;
-                    }
-                }
-                
-                // 2. 如果没有直接的大纲级别，检查样式定义
-                if (outlineLevel == null)
-                {
-                    var styleId = paragraphProperties.ParagraphStyleId?.Val?.Value;
-                    if (!string.IsNullOrEmpty(styleId))
-                    {
-                        // 检查样式定义
-                        var stylesPart = _document?.MainDocumentPart?.StyleDefinitionsPart;
-                        if (stylesPart != null && stylesPart.Styles != null)
-                        {
-                            var style = stylesPart.Styles.Elements<Style>().FirstOrDefault(s => s.StyleId?.Value == styleId);
-                            if (style != null)
-                            {
-                                // 检查样式名称是否包含"heading"（不区分大小写）
-                                var styleName = style.GetFirstChild<StyleName>()?.Val?.Value ?? "";
-                                if (styleName.IndexOf("heading", StringComparison.OrdinalIgnoreCase) >= 0)
-                                {
-                                    // 根据样式名称推断标题级别
-                                    if (styleName.IndexOf("1", StringComparison.OrdinalIgnoreCase) >= 0)
-                                    {
-                                        return "Heading1";
-                                    }
-                                    else if (styleName.IndexOf("2", StringComparison.OrdinalIgnoreCase) >= 0)
-                                    {
-                                        return "Heading2";
-                                    }
-                                    else if (styleName.IndexOf("3", StringComparison.OrdinalIgnoreCase) >= 0)
-                                    {
-                                        return "Heading3";
-                                    }
-                                    else if (styleName.IndexOf("4", StringComparison.OrdinalIgnoreCase) >= 0)
-                                    {
-                                        return "Heading4";
-                                    }
-                                    else
-                                    {
-                                        // 默认视为一级标题
-                                        return "Heading1";
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                // 3. 根据大纲级别返回结果
-                if (outlineLevel != null)
-                {
-                    return outlineLevel switch
-                    {
-                        0 => "Normal",    // 正文文本
-                        1 => "Heading1",  // 1级标题
-                        2 => "Heading2",  // 2级标题
-                        3 => "Heading3",  // 3级标题
-                        4 => "Heading4",  // 4级标题
-                        _ => null         // 5-9级保持不变，返回null
-                    };
-                }
-                
-                // 4. 如果没有大纲级别和标准样式名称，尝试根据字体大小推断
-                // 获取段落的字体大小
-                double fontSize = GetParagraphFontSize(paragraph);
-                
-                // 根据字体大小推断标题级别（字体越大，标题级别越高）
-                if (fontSize >= 16) return "Heading1";  // 一级标题：16pt及以上
-                if (fontSize >= 14) return "Heading2";  // 二级标题：14pt-15.5pt
-                if (fontSize >= 13) return "Heading3";  // 三级标题：13pt-13.5pt
-                if (fontSize >= 12) return "Heading4";  // 四级标题：12pt
-            }
-            
-            // 5. 如果没有大纲级别、标准样式名称和大字体，尝试根据文本格式推断
-            // 检查文本是否符合标题格式，如"4 工程任务和规模"、"4.1 可行性研究报告"等
-            if (!string.IsNullOrEmpty(text))
-            {
-                // 匹配一级标题格式：数字+空格+文本（如"4 工程任务和规模"）
-                if (System.Text.RegularExpressions.Regex.IsMatch(text, @"^\d+\s+[\u4e00-\u9fa5\w]"))
-                {
-                    return "Heading1";
-                }
-                // 匹配二级标题格式：数字.数字+空格+文本（如"4.1 可行性研究报告"）
-                else if (System.Text.RegularExpressions.Regex.IsMatch(text, @"^\d+\.\d+\s+[\u4e00-\u9fa5\w]"))
-                {
-                    return "Heading2";
-                }
-                // 匹配三级标题格式：数字.数字.数字+空格+文本（如"4.1.1 可行性研究报告"）
-                else if (System.Text.RegularExpressions.Regex.IsMatch(text, @"^\d+\.\d+\.\d+\s+[\u4e00-\u9fa5\w]"))
-                {
-                    return "Heading3";
-                }
-                // 匹配四级标题格式：数字.数字.数字.数字+空格+文本（如"4.1.1.1 可行性研究报告"）
-                else if (System.Text.RegularExpressions.Regex.IsMatch(text, @"^\d+\.\d+\.\d+\.\d+\s+[\u4e00-\u9fa5\w]"))
-                {
-                    return "Heading4";
-                }
+                return "Normal"; // 空段落视为正文
             }
 
-            // 默认视为正文文本
+
+
+            // 通过正则表达式识别标题格式（更严格的规则，避免误识别正文中的一般数字）
+            
+            // 一级标题：格式如 "1 标题" 或 "2 水文" 等
+            // 规则：单个数字（1-99）+ 空格 + 中文内容（至少1个字符）
+            if (Regex.IsMatch(text, @"^[1-9]\d?\s+[\u4e00-\u9fa5]+$"))
+            {
+                return "Heading1"; // 一级标题
+            }
+            
+            // 二级标题：格式如 "1.1 标题" 或 "2.1 设计洪水" 等
+            // 规则：数字.数字（如1.1, 2.3, 10.5等，避免匹配年份、小数等）+ 空格/中文内容
+            if (Regex.IsMatch(text, @"^[1-9]\d?\.[1-9]\d?\s*[\u4e00-\u9fa5]+$"))
+            {
+                return "Heading2"; // 二级标题
+            }
+            
+            // 三级标题：格式如 "1.1.1 标题" 等
+            // 规则：数字.数字.数字 + 空格/中文内容
+            if (Regex.IsMatch(text, @"^[1-9]\d?\.[1-9]\d?\.[1-9]\d?\s*[\u4e00-\u9fa5]+$"))
+            {
+                return "Heading3"; // 三级标题
+            }
+            
+            // 四级标题：格式如 "1.1.1.1 标题" 等
+            // 规则：数字.数字.数字.数字 + 空格/中文内容
+            if (Regex.IsMatch(text, @"^[1-9]\d?\.[1-9]\d?\.[1-9]\d?\.[1-9]\d?\s*[\u4e00-\u9fa5]+$"))
+            {
+                return "Heading4"; // 四级标题
+            }
+
+            // 其他格式都视为正文
             return "Normal";
         }
         
         /// <summary>
         /// 获取段落的字体名称
         /// </summary>
-        private string GetParagraphFontName(Paragraph paragraph)
+        private string GetParagraphFontName(XWPFParagraph paragraph)
         {
             // 默认字体名称
             string defaultFontName = "宋体";
             
             // 1. 首先从Run元素中获取字体名称
-            string mostCommonFont = defaultFontName;
-            int fontCount = 0;
+            // 使用字典统计各字体出现次数，返回出现次数最多的字体
+            var fontCounts = new Dictionary<string, int>();
             
-            foreach (var run in paragraph.Elements<Run>())
+            foreach (var run in paragraph.Runs)
             {
-                var runProperties = run.RunProperties;
-                if (runProperties == null)
+                var runCTR = run.GetCTR();
+                if (runCTR.rPr != null && runCTR.rPr.rFonts != null)
                 {
-                    continue;
-                }
-                
-                var runFonts = runProperties.GetFirstChild<RunFonts>();
-                if (runFonts == null)
-                {
-                    continue;
-                }
-                
-                // 优先使用EastAsia字体（中文），然后是HighAnsi，最后是Ascii
-                string fontName = runFonts.EastAsia?.Value ?? 
-                                 runFonts.HighAnsi?.Value ?? 
-                                 runFonts.Ascii?.Value ?? 
-                                 defaultFontName;
-                
-                // 记录最常见的字体名称
-                mostCommonFont = fontName;
-                fontCount++;
-                
-                // 如果找到至少一个字体名称，就返回
-                if (fontCount > 0)
-                {
-                    return mostCommonFont;
-                }
-            }
-            
-            // 2. 如果没有从Run中获取到字体名称，尝试从样式中获取
-            var paragraphProperties = paragraph.ParagraphProperties;
-            if (paragraphProperties != null)
-            {
-                var styleId = paragraphProperties.ParagraphStyleId?.Val?.Value;
-                if (!string.IsNullOrEmpty(styleId))
-                {
-                    // 查找样式定义
-                    var stylesPart = _document?.MainDocumentPart?.StyleDefinitionsPart;
-                    if (stylesPart != null && stylesPart.Styles != null)
+                    // 优先使用EastAsia字体（中文），然后是HighAnsi，最后是Ascii
+                    string fontName = !string.IsNullOrEmpty(runCTR.rPr.rFonts.eastAsia) ? runCTR.rPr.rFonts.eastAsia :
+                                     !string.IsNullOrEmpty(runCTR.rPr.rFonts.hAnsi) ? runCTR.rPr.rFonts.hAnsi :
+                                     !string.IsNullOrEmpty(runCTR.rPr.rFonts.ascii) ? runCTR.rPr.rFonts.ascii :
+                                     defaultFontName;
+                    
+                    if (!string.IsNullOrEmpty(fontName) && fontName != defaultFontName)
                     {
-                        var style = stylesPart.Styles.Elements<Style>().FirstOrDefault(s => s.StyleId?.Value == styleId);
-                        if (style != null)
+                        if (fontCounts.ContainsKey(fontName))
                         {
-                            var runProperties = style.GetFirstChild<RunProperties>();
-                            if (runProperties != null)
-                            {
-                                var runFonts = runProperties.GetFirstChild<RunFonts>();
-                                if (runFonts != null)
-                                {
-                                    return runFonts.EastAsia?.Value ?? 
-                                           runFonts.HighAnsi?.Value ?? 
-                                           runFonts.Ascii?.Value ?? 
-                                           defaultFontName;
-                                }
-                            }
+                            fontCounts[fontName]++;
+                        }
+                        else
+                        {
+                            fontCounts[fontName] = 1;
                         }
                     }
                 }
+            }
+            
+            // 如果Run中有字体设置，返回出现次数最多的字体
+            if (fontCounts.Any())
+            {
+                return fontCounts.OrderByDescending(kvp => kvp.Value).First().Key;
             }
             
             // 3. 默认返回宋体
             return defaultFontName;
         }
-        
+
         /// <summary>
         /// 获取段落的字体大小（磅）
-        /// 优先级：直接设置的字体大小 > 样式推断的字体大小 > 默认字体大小
         /// </summary>
-        private double GetParagraphFontSize(Paragraph paragraph)
+        private double GetParagraphFontSize(XWPFParagraph paragraph)
         {
             // 默认字体大小
             double defaultFontSize = 10.5;
             
-            // 1. 首先从Run元素中获取直接设置的字体大小
-            double maxDirectFontSize = 0;
+            // 1. 从Run元素中获取字体大小
+            // 使用字典统计各字体大小出现次数，返回出现次数最多的字体大小
+            var fontSizeCounts = new Dictionary<double, int>();
             
-            foreach (var run in paragraph.Elements<Run>())
+            foreach (var run in paragraph.Runs)
             {
-                var runProperties = run.RunProperties;
-                if (runProperties != null)
+                var runCTR = run.GetCTR();
+                if (runCTR.rPr != null && runCTR.rPr.sz != null && runCTR.rPr.sz.val != null)
                 {
-                    var fontSizeElement = runProperties.GetFirstChild<FontSize>();
-                    if (fontSizeElement != null && fontSizeElement.Val != null)
+                    if (double.TryParse(runCTR.rPr.sz.val.ToString(), out double fontSizeValue))
                     {
-                        // FontSize的Val值是半点单位（1pt = 2半点）
-                        if (int.TryParse(fontSizeElement.Val.InnerText, out int halfPoints))
+                        double fontSize = fontSizeValue / 2.0; // 转换为磅
+                        
+                        if (fontSizeCounts.ContainsKey(fontSize))
                         {
-                            double fontSize = halfPoints / 2.0;
-                            if (fontSize > maxDirectFontSize)
-                            {
-                                maxDirectFontSize = fontSize;
-                            }
+                            fontSizeCounts[fontSize]++;
+                        }
+                        else
+                        {
+                            fontSizeCounts[fontSize] = 1;
                         }
                     }
                 }
             }
             
-            // 2. 如果有直接设置的字体大小，直接返回
-            if (maxDirectFontSize > 0)
+            // 如果Run中有字体大小设置，返回出现次数最多的字体大小
+            if (fontSizeCounts.Any())
             {
-                return maxDirectFontSize;
+                return fontSizeCounts.OrderByDescending(kvp => kvp.Value).First().Key;
             }
             
-            // 3. 否则，从样式推断字体大小
-            double styleBasedFontSize = 0;
-            
-            var paragraphProperties = paragraph.ParagraphProperties;
-            if (paragraphProperties != null)
-            {
-                var styleId = paragraphProperties.ParagraphStyleId?.Val?.Value;
-                if (!string.IsNullOrEmpty(styleId))
-                {
-                    // 查找样式定义
-                    var stylesPart = _document?.MainDocumentPart?.StyleDefinitionsPart;
-                    if (stylesPart != null && stylesPart.Styles != null)
-                    {
-                        // 构建样式字典
-                        var styleDict = new Dictionary<string, Style>();
-                        foreach (var style in stylesPart.Styles.Elements<Style>())
-                        {
-                            if (style.StyleId != null && style.StyleId.Value != null)
-                            {
-                                styleDict[style.StyleId.Value] = style;
-                            }
-                        }
-                        
-                        // 递归查找样式名称
-                        string currentStyleId = styleId;
-                        string styleName = "";
-                        
-                        while (!string.IsNullOrEmpty(currentStyleId) && styleDict.TryGetValue(currentStyleId, out Style style))
-                        {
-                            var styleNameElement = style.GetFirstChild<StyleName>();
-                            if (styleNameElement != null && styleNameElement.Val != null)
-                            {
-                                styleName = styleNameElement.Val.Value;
-                                break; // 找到后停止递归
-                            }
-                            
-                            // 检查是否有基于样式，继续递归
-                            var basedOn = style.GetFirstChild<BasedOn>();
-                            if (basedOn != null && basedOn.Val != null)
-                            {
-                                currentStyleId = basedOn.Val.Value;
-                            }
-                            else
-                            {
-                                break;
-                            }
-                        }
-                        
-                        // 根据样式名称推断字体大小
-                        if (!string.IsNullOrEmpty(styleName))
-                        {
-                            // 不区分大小写比较，使用更灵活的匹配
-                            if (styleName.IndexOf("heading", StringComparison.OrdinalIgnoreCase) >= 0)
-                            {
-                                // 根据样式名称中的数字推断字体大小
-                                if (styleName.IndexOf("1", StringComparison.OrdinalIgnoreCase) >= 0)
-                                {
-                                    styleBasedFontSize = 18.0; // 小二
-                                }
-                                else if (styleName.IndexOf("2", StringComparison.OrdinalIgnoreCase) >= 0)
-                                {
-                                    styleBasedFontSize = 16.0; // 三号
-                                }
-                                else if (styleName.IndexOf("3", StringComparison.OrdinalIgnoreCase) >= 0)
-                                {
-                                    styleBasedFontSize = 15.0; // 小三
-                                }
-                                else if (styleName.IndexOf("4", StringComparison.OrdinalIgnoreCase) >= 0)
-                                {
-                                    styleBasedFontSize = 14.0; // 四号
-                                }
-                                else
-                                {
-                                    styleBasedFontSize = 16.0; // 默认标题大小
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // 4. 返回样式推断的字体大小或默认字体大小
-            return styleBasedFontSize > 0 ? styleBasedFontSize : defaultFontSize;
+            // 3. 默认返回10.5磅
+            return defaultFontSize;
         }
 
+        /// <summary>
+        /// 获取段落的段前间距（磅）
+        /// </summary>
+        private double GetParagraphSpaceBefore(XWPFParagraph paragraph)
+        {
+            // 默认段前间距
+            double defaultSpaceBefore = 0;
+            
+            // 从段落属性中获取间距
+            var paraCTP = paragraph.GetCTP();
+            if (paraCTP.pPr != null && paraCTP.pPr.spacing != null && paraCTP.pPr.spacing.@before.HasValue)
+            {
+                if (int.TryParse(paraCTP.pPr.spacing.@before.ToString(), out int beforeValue))
+                {
+                    return beforeValue / 20.0; // 转换为磅（1磅=20缇）
+                }
+            }
+            
+            // 默认返回0磅
+            return defaultSpaceBefore;
+        }
+
+        /// <summary>
+        /// 获取段落的段后间距（磅）
+        /// </summary>
+        private double GetParagraphSpaceAfter(XWPFParagraph paragraph)
+        {
+            // 默认段后间距
+            double defaultSpaceAfter = 0;
+            
+            // 从段落属性中获取间距
+            var paraCTP = paragraph.GetCTP();
+            if (paraCTP.pPr != null && paraCTP.pPr.spacing != null && paraCTP.pPr.spacing.@after.HasValue)
+            {
+                if (int.TryParse(paraCTP.pPr.spacing.@after.ToString(), out int afterValue))
+                {
+                    return afterValue / 20.0; // 转换为磅（1磅=20缇）
+                }
+            }
+            
+            // 默认返回0磅
+            return defaultSpaceAfter;
+        }
+        
+
+        
+        /// <summary>
+        /// 获取段落的详细信息
+        /// </summary>
+        public Dictionary<string, object> GetParagraphDetails(XWPFParagraph paragraph)
+        {
+            var details = new Dictionary<string, object>();
+            
+            // 获取段落文本
+            string text = paragraph.ParagraphText.Trim();
+            details["Text"] = text;
+            
+            // 通过正则表达式推断样式类型
+            string inferredStyle = InferStyleFromParagraph(paragraph, new StyleConfig());
+            details["StyleType"] = inferredStyle;
+            
+            // 获取字体名称
+            string fontName = GetParagraphFontName(paragraph);
+            details["FontName"] = fontName;
+            
+            // 获取字体大小
+            double fontSize = GetParagraphFontSize(paragraph);
+            details["FontSize"] = fontSize;
+            
+            // 获取段前间距
+            double spaceBefore = GetParagraphSpaceBefore(paragraph);
+            details["SpaceBefore"] = spaceBefore;
+            
+            // 获取段后间距
+            double spaceAfter = GetParagraphSpaceAfter(paragraph);
+            details["SpaceAfter"] = spaceAfter;
+
+            return details;
+        }
+        
         /// <summary>
         /// 根据样式名称获取对应的段落样式配置
         /// </summary>
@@ -848,49 +642,22 @@ namespace WordTools2.Services
             };
         }
 
-        /// <summary>
-        /// 根据段落样式配置获取样式 ID
-        /// </summary>
-        private string GetStyleIdForParagraphStyle(ParagraphStyle style)
-        {
-            if (style.FontSize >= 16) return "Heading1";
-            if (style.FontSize >= 14) return "Heading2";
-            if (style.FontSize >= 13) return "Heading3";
-            if (style.FontSize >= 12) return "Heading4";
 
-            return "Normal";
-        }
+
+
+
+
 
         /// <summary>
-        /// 根据样式ID获取对应的大纲级别
+        /// 根据样式配置获取样式类型描述
         /// </summary>
-        private int GetOutlineLevelForStyle(string styleName)
+        private string GetStyleTypeFromConfig(ParagraphStyle styleConfig)
         {
-            return styleName switch
-            {
-                "Normal" => 0,    // 正文文本
-                "Heading1" => 1,  // 一级标题
-                "Heading2" => 2,  // 二级标题
-                "Heading3" => 3,  // 三级标题
-                "Heading4" => 4,  // 四级标题
-                _ => 9            // 其他级别
-            };
-        }
-
-        /// <summary>
-        /// 根据样式名称获取对应的大纲级别（用于日志显示）
-        /// </summary>
-        private int GetOutlineLevelFromStyleName(string styleName)
-        {
-            return styleName switch
-            {
-                "Normal" => 0,    // 正文文本
-                "Heading1" => 1,  // 一级标题
-                "Heading2" => 2,  // 二级标题
-                "Heading3" => 3,  // 三级标题
-                "Heading4" => 4,  // 四级标题
-                _ => -1           // 未知级别
-            };
+            if (styleConfig.FontSize >= 16) return "一级标题";
+            if (styleConfig.FontSize >= 14) return "二级标题";
+            if (styleConfig.FontSize >= 13) return "三级标题";
+            if (styleConfig.FontSize >= 12) return "四级标题";
+            return "正文文本";
         }
 
         /// <summary>
@@ -904,11 +671,11 @@ namespace WordTools2.Services
         /// <summary>
         /// 将半点单位转换为字号（磅）
         /// </summary>
-        private double ConvertHalfPointsToFontSize(string? halfPoints)
+        private double ConvertHalfPointsToFontSize(ulong? halfPoints)
         {
-            if (int.TryParse(halfPoints ?? "", out int hp))
+            if (halfPoints.HasValue)
             {
-                return hp / 2.0;
+                return halfPoints.Value / 2.0;
             }
             return 10.5;
         }
@@ -919,6 +686,51 @@ namespace WordTools2.Services
         private string ConvertPointsToTwips(double points)
         {
             return ((int)(points * 20)).ToString();
+        }
+
+        /// <summary>
+        /// 根据样式名称获取对应的大纲级别
+        /// 注意：Word大纲级别从0开始，0=最高级标题，1=二级标题，以此类推
+        /// </summary>
+        private int GetOutlineLevelForStyle(string styleName)
+        {
+            return styleName switch
+            {
+                "Normal" => 9,    // 正文文本不参与大纲
+                "Heading1" => 0,  // 一级标题 - 对应Word大纲级别0（最高级）
+                "Heading2" => 1,  // 二级标题 - 对应Word大纲级别1
+                "Heading3" => 2,  // 三级标题 - 对应Word大纲级别2
+                "Heading4" => 3,  // 四级标题 - 对应Word大纲级别3
+                _ => 9            // 其他级别
+            };
+        }
+
+        /// <summary>
+        /// 为段落设置大纲级别
+        /// </summary>
+        private void SetOutlineLevelForParagraph(XWPFParagraph paragraph, string styleName, Action<string> logMessage)
+        {
+            if (styleName == "Normal")
+            {
+                logMessage($"正文段落：不设置大纲级别");
+                return;
+            }
+
+            int targetLevel = GetOutlineLevelForStyle(styleName);
+            
+            // 设置大纲级别 - 使用XWPFParagraph API
+            var paraCTP = paragraph.GetCTP();
+            if (paraCTP.pPr == null)
+            {
+                paraCTP.AddNewPPr();
+            }
+            if (paraCTP.pPr.outlineLvl == null)
+            {
+                paraCTP.pPr.outlineLvl = new NPOI.OpenXmlFormats.Wordprocessing.CT_DecimalNumber();
+            }
+            paraCTP.pPr.outlineLvl.val = targetLevel.ToString();
+            
+            logMessage($"设置大纲级别: 样式名={styleName}, 目标级别={targetLevel}");
         }
     }
 }

@@ -6,7 +6,7 @@ namespace WordTools2;
 public partial class Form1 : Form
 {
     private readonly DocumentService _documentService = new DocumentService();
-    private readonly StyleConfig _styleConfig = new StyleConfig();
+    private Models.StyleConfig _styleConfig = new Models.StyleConfig();
     private string? _currentFilePath;
 
     // 中文字体大小与数值大小的对应关系
@@ -34,6 +34,7 @@ public partial class Form1 : Form
     {
         InitializeComponent();
         InitializeEventHandlers();
+        LoadConfig();
     }
 
     private void InitializeEventHandlers()
@@ -44,6 +45,85 @@ public partial class Form1 : Form
 
         this.DragEnter += Form1_DragEnter;
         this.DragDrop += Form1_DragDrop;
+    }
+    
+    /// <summary>
+    /// 从配置文件加载样式配置
+    /// </summary>
+    private void LoadConfig()
+    {
+        try
+        {
+            _styleConfig = ConfigManager.LoadConfig();
+            ApplyConfigToUI();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"加载配置失败: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    /// <summary>
+    /// 将配置应用到UI控件
+    /// </summary>
+    private void ApplyConfigToUI()
+    {
+        // 将配置应用到UI控件
+        cmbHeading1Font.SelectedItem = _styleConfig.Heading1.FontName;
+        cmbHeading1Size.SelectedItem = GetChineseFontSize(_styleConfig.Heading1.FontSize);
+        nudHeading1SpaceBefore.Value = (decimal)_styleConfig.Heading1.SpaceBefore;
+        nudHeading1SpaceAfter.Value = (decimal)_styleConfig.Heading1.SpaceAfter;
+
+        cmbHeading2Font.SelectedItem = _styleConfig.Heading2.FontName;
+        cmbHeading2Size.SelectedItem = GetChineseFontSize(_styleConfig.Heading2.FontSize);
+        nudHeading2SpaceBefore.Value = (decimal)_styleConfig.Heading2.SpaceBefore;
+        nudHeading2SpaceAfter.Value = (decimal)_styleConfig.Heading2.SpaceAfter;
+
+        cmbHeading3Font.SelectedItem = _styleConfig.Heading3.FontName;
+        cmbHeading3Size.SelectedItem = GetChineseFontSize(_styleConfig.Heading3.FontSize);
+        nudHeading3SpaceBefore.Value = (decimal)_styleConfig.Heading3.SpaceBefore;
+        nudHeading3SpaceAfter.Value = (decimal)_styleConfig.Heading3.SpaceAfter;
+
+        cmbHeading4Font.SelectedItem = _styleConfig.Heading4.FontName;
+        cmbHeading4Size.SelectedItem = GetChineseFontSize(_styleConfig.Heading4.FontSize);
+        nudHeading4SpaceBefore.Value = (decimal)_styleConfig.Heading4.SpaceBefore;
+        nudHeading4SpaceAfter.Value = (decimal)_styleConfig.Heading4.SpaceAfter;
+
+        cmbNormalFont.SelectedItem = _styleConfig.Normal.FontName;
+        cmbNormalSize.SelectedItem = GetChineseFontSize(_styleConfig.Normal.FontSize);
+        nudNormalLineSpacing.Value = (decimal)_styleConfig.Normal.LineSpacing;
+    }
+
+    /// <summary>
+    /// 根据数值大小获取对应的中文字体大小
+    /// </summary>
+    private string GetChineseFontSize(double fontSize)
+    {
+        // 根据数值大小获取对应的中文字体大小
+        foreach (var kvp in _fontSizeMap)
+        {
+            if (Math.Abs(kvp.Value - fontSize) < 0.1)
+            {
+                return kvp.Key;
+            }
+        }
+        return "小四"; // 默认返回小四
+    }
+
+    /// <summary>
+    /// 保存配置到文件
+    /// </summary>
+    private void SaveConfig()
+    {
+        try
+        {
+            CollectStyleConfig();
+            ConfigManager.SaveConfig(_styleConfig);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"保存配置失败: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 
     private void Form1_DragEnter(object? sender, DragEventArgs e)
@@ -92,25 +172,15 @@ public partial class Form1 : Form
                 var stats = _documentService.GetDocumentStats();
                 LogMessage("文档统计（基于大纲级别）:");
                 LogMessage($"  正文文本 (大纲级别0): {stats["Normal"]}");
-                LogMessage($"  一级标题 (大纲级别1): {stats["Heading1"]}");
-                LogMessage($"  二级标题 (大纲级别2): {stats["Heading2"]}");
-                LogMessage($"  三级标题 (大纲级别3): {stats["Heading3"]}");
-                LogMessage($"  四级标题 (大纲级别4): {stats["Heading4"]}");
+                LogMessage($"  一级标题: {stats["Heading1"]}");
+                LogMessage($"  二级标题: {stats["Heading2"]}");
+                LogMessage($"  三级标题: {stats["Heading3"]}");
+                LogMessage($"  四级标题: {stats["Heading4"]}");
+                
+                if (stats["Other"] > 0)
+                    LogMessage($"  其他格式: {stats["Other"]}");
 
-                if (stats["Level5"] > 0)
-                    LogMessage($"  5级段落 (保持不变): {stats["Level5"]}");
-                if (stats["Level6"] > 0)
-                    LogMessage($"  6级段落 (保持不变): {stats["Level6"]}");
-                if (stats["Level7"] > 0)
-                    LogMessage($"  7级段落 (保持不变): {stats["Level7"]}");
-                if (stats["Level8"] > 0)
-                    LogMessage($"  8级段落 (保持不变): {stats["Level8"]}");
-                if (stats["Level9"] > 0)
-                    LogMessage($"  9级段落 (保持不变): {stats["Level9"]}");
-                if (stats["NoLevel"] > 0)
-                    LogMessage($"  无大纲级别: {stats["NoLevel"]}");
-
-                LogMessage($"  说明: 仅对0-4级段落进行排版，5-9级段落维持原样");
+                LogMessage("说明: 仅通过正则表达式识别段落类型并应用格式");
                 LogMessage("原始文档未被修改");
             }
         }

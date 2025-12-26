@@ -543,7 +543,7 @@ partial class Form1
         grpNormal.Size = new Size(646, 50);
         grpNormal.TabIndex = 4;
         grpNormal.TabStop = false;
-        grpNormal.Text = "正文";
+        grpNormal.Text = "正文段落";
         // 
         // lblNormalFont
         // 

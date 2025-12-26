@@ -1,5 +1,0 @@
-D:\CodeBuddy\WordTools2\obj\Debug\net10.0-windows\TestProperties.csproj.AssemblyReference.cache
-D:\CodeBuddy\WordTools2\obj\Debug\net10.0-windows\TestProperties.GeneratedMSBuildEditorConfig.editorconfig
-D:\CodeBuddy\WordTools2\obj\Debug\net10.0-windows\TestProperties.AssemblyInfoInputs.cache
-D:\CodeBuddy\WordTools2\obj\Debug\net10.0-windows\TestProperties.AssemblyInfo.cs
-D:\CodeBuddy\WordTools2\obj\Debug\net10.0-windows\TestProperties.csproj.CoreCompileInputs.cache

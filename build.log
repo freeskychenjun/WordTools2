@@ -1,0 +1,11 @@
+  正在确定要还原的项目…
+  所有项目均是最新的，无法还原。
+d:\CodeBuddy\WordTools2\Form1.cs(9,13): error CS0104: “StyleConfig”是“WordTools2.Models.StyleConfig”和“WordTools2.Services.StyleConfig”之间的不明确的引用 [d:\CodeBuddy\WordTools2\WordTools2.csproj]
+
+生成失败。
+
+d:\CodeBuddy\WordTools2\Form1.cs(9,13): error CS0104: “StyleConfig”是“WordTools2.Models.StyleConfig”和“WordTools2.Services.StyleConfig”之间的不明确的引用 [d:\CodeBuddy\WordTools2\WordTools2.csproj]
+    0 个警告
+    1 个错误
+
+已用时间 00:00:00.78

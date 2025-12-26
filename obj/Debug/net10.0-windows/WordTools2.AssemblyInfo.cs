@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("WordTools2")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b3f81a04f91544c3d007e1d878f02fbf54283265")]
 [assembly: System.Reflection.AssemblyProductAttribute("WordTools2")]
 [assembly: System.Reflection.AssemblyTitleAttribute("WordTools2")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

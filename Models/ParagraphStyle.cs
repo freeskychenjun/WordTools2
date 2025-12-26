@@ -30,15 +30,27 @@ namespace WordTools2.Models
         /// </summary>
         public double LineSpacing { get; set; } = 0;
 
+        /// <summary>
+        /// 大纲级别（0-9，其中9表示正文级别）
+        /// </summary>
+        public int OutlineLevel { get; set; } = 9;
+
+        /// <summary>
+        /// 是否加粗
+        /// </summary>
+        public bool Bold { get; set; } = false;
+
         public ParagraphStyle() { }
 
-        public ParagraphStyle(string fontName, double fontSize, double spaceBefore = 0, double spaceAfter = 0, double lineSpacing = 0)
+        public ParagraphStyle(string fontName, double fontSize, double spaceBefore = 0, double spaceAfter = 0, double lineSpacing = 0, int outlineLevel = 9, bool bold = false)
         {
             FontName = fontName;
             FontSize = fontSize;
             SpaceBefore = spaceBefore;
             SpaceAfter = spaceAfter;
             LineSpacing = lineSpacing;
+            OutlineLevel = outlineLevel;
+            Bold = bold;
         }
     }
 }

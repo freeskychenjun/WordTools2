@@ -30,6 +30,16 @@ namespace WordTools2.Models
         /// </summary>
         public ParagraphStyle Normal { get; set; } = new ParagraphStyle("宋体", 10.5, 0, 0, 15);
 
+        /// <summary>
+        /// 表格标题样式
+        /// </summary>
+        public ParagraphStyle TableCaption { get; set; } = new ParagraphStyle("黑体", 10.5, 0, 0, 15, 8, false);
+
+        /// <summary>
+        /// 图形标题样式
+        /// </summary>
+        public ParagraphStyle ImageCaption { get; set; } = new ParagraphStyle("黑体", 10.5, 0, 0, 15, 6, false);
+
         public StyleConfig() { }
     }
 }

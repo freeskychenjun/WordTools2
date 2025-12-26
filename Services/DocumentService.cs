@@ -119,6 +119,36 @@ namespace WordTools2.Services
                             // 通过正则表达式识别段落样式类型
                             var inferredStyle = InferStyleFromParagraph(paragraph, config);
                             
+                            // 对表格标题段落应用专用样式
+                            if (inferredStyle == "TableCaption")
+                            {
+                                var style = config.TableCaption;
+                                ApplyStyleToParagraph(paragraph, style, "TableCaption", logMessage, config);
+                                logMessage($"处理表格标题：{paragraph.ParagraphText.Trim()}");
+                                processed++;
+                                if (processed % 10 == 0)
+                                {
+                                    var percent = (int)((double)processed / total * 100);
+                                    updateProgress($"处理中... {percent}%");
+                                }
+                                continue;
+                            }
+                            
+                            // 对图形标题段落应用专用样式
+                            if (inferredStyle == "ImageCaption")
+                            {
+                                var style = config.ImageCaption;
+                                ApplyStyleToParagraph(paragraph, style, "ImageCaption", logMessage, config);
+                                logMessage($"处理图形标题：{paragraph.ParagraphText.Trim()}");
+                                processed++;
+                                if (processed % 10 == 0)
+                                {
+                                    var percent = (int)((double)processed / total * 100);
+                                    updateProgress($"处理中... {percent}%");
+                                }
+                                continue;
+                            }
+                            
                             // 对图片段落应用专用样式
                             if (inferredStyle == "Image")
                             {
@@ -139,7 +169,7 @@ namespace WordTools2.Services
                                 var style = GetParagraphStyle(inferredStyle, config);
                                 if (style != null)
                                 {
-                                    ApplyStyleToParagraph(paragraph, style, inferredStyle, logMessage);
+                                    ApplyStyleToParagraph(paragraph, style, inferredStyle, logMessage, config);
                                     logMessage($"处理段落格式: {inferredStyle}");
                                 }
                             }
@@ -152,6 +182,9 @@ namespace WordTools2.Services
                             }
                         }
 
+                        // 处理表格格式设置
+                        ProcessTablesInDocument(doc, config, logMessage);
+                        
                         // 确保所有更改都提交到文档
                         using (var output = new FileStream(_workingFilePath, FileMode.Create, FileAccess.Write))
                         {
@@ -169,7 +202,7 @@ namespace WordTools2.Services
                         _document = new XWPFDocument(fileStream);
                     }
 
-                    updateProgress("处理完成");
+                    updateProgress("处理完成 100%");
                     logMessage("样式应用成功（原始文档未被修改）");
                 }
                 catch
@@ -255,6 +288,8 @@ namespace WordTools2.Services
                 { "Heading2", 0 },    // 2级标题
                 { "Heading3", 0 },    // 3级标题
                 { "Heading4", 0 },    // 4级标题
+                { "TableCaption", 0 }, // 表格标题
+                { "ImageCaption", 0 }, // 图形标题
                 { "Image", 0 },       // 图片段落
                 { "Other", 0 }        // 其他格式
             };
@@ -278,6 +313,16 @@ namespace WordTools2.Services
                 if (string.IsNullOrEmpty(text))
                 {
                     stats["Normal"]++;
+                }
+                // 识别表格标题：以"表"开头，可能包含编号的段落
+                else if (Regex.IsMatch(text, @"^表\d*(\.\d+)*\s*[\u4e00-\u9fa5].*$"))
+                {
+                    stats["TableCaption"]++; // 表格标题
+                }
+                // 识别图形标题：以"图"开头，可能包含编号的段落
+                else if (Regex.IsMatch(text, @"^图\d*(\.\d+)*(-\d+)*\s+.*$"))
+                {
+                    stats["ImageCaption"]++; // 图形标题
                 }
                 else if (Regex.IsMatch(text, @"^[1-9]\d?\s+[\u4e00-\u9fa5]+$"))
                 {
@@ -331,7 +376,7 @@ namespace WordTools2.Services
         /// 直接修改段落格式（不修改样式定义）
         /// 只修改当前段落的字体、字号、间距、大纲级别等属性
         /// </summary>
-        private void ApplyStyleToParagraph(XWPFParagraph paragraph, ParagraphStyle styleConfig, string styleName, Action<string> logMessage)
+        private void ApplyStyleToParagraph(XWPFParagraph paragraph, ParagraphStyle styleConfig, string styleName, Action<string> logMessage, Models.StyleConfig? config = null)
         {
             // 首先获取段落文本用于调试
             var text = paragraph.ParagraphText.Trim();
@@ -343,8 +388,8 @@ namespace WordTools2.Services
                 return;
             }
 
-            // 设置大纲级别和格式
-            SetOutlineLevelForParagraph(paragraph, styleName, logMessage);
+            // 设置大纲级别和格式（表格标题需要特殊处理）
+            SetOutlineLevelForParagraph(paragraph, styleName, logMessage, config);
 
             // 设置段落间距
             var paraCTP2 = paragraph.GetCTP();
@@ -405,6 +450,13 @@ namespace WordTools2.Services
                     runCTR.rPr.szCs = new NPOI.OpenXmlFormats.Wordprocessing.CT_HpsMeasure();
                 }
                 runCTR.rPr.szCs.val = (ulong)(styleConfig.FontSize * 2); // NPOI使用半点单位
+
+                // 设置加粗
+                if (runCTR.rPr.b == null)
+                {
+                    runCTR.rPr.b = new NPOI.OpenXmlFormats.Wordprocessing.CT_OnOff();
+                }
+                runCTR.rPr.b.val = styleConfig.Bold;
             }
 
             // 调试信息：记录应用的格式（简化正文段落显示）
@@ -565,7 +617,19 @@ namespace WordTools2.Services
                 return "Normal"; // 空段落视为正文
             }
 
-
+            // 识别表格标题：以"表"开头，可能包含编号的段落
+            // 规则：以"表"开头，后跟数字编号（可选），然后是空格和中文内容
+            if (Regex.IsMatch(text, @"^表\d*(\.\d+)*\s*[\u4e00-\u9fa5].*$"))
+            {
+                return "TableCaption"; // 表格标题
+            }
+            
+            // 识别图形标题：以"图"开头，可能包含编号的段落
+            // 规则：以"图"开头，后跟数字编号（可选），然后是空格和任意内容
+            if (Regex.IsMatch(text, @"^图\d*(\.\d+)*(-\d+)*\s+.*$"))
+            {
+                return "ImageCaption"; // 图形标题
+            }
 
             // 通过正则表达式识别标题格式（更严格的规则，避免误识别正文中的一般数字）
             
@@ -783,6 +847,7 @@ namespace WordTools2.Services
                 "Heading3" => config.Heading3,
                 "Heading4" => config.Heading4,
                 "Normal" => config.Normal,
+                "TableCaption" => config.TableCaption,
                 "Image" => CreateImageParagraphStyle(),
                 _ => config.Normal
             };
@@ -853,24 +918,26 @@ namespace WordTools2.Services
         /// 根据样式名称获取对应的大纲级别
         /// 注意：Word大纲级别从0开始，0=最高级标题，1=二级标题，以此类推
         /// </summary>
-        private int GetOutlineLevelForStyle(string styleName)
+        private int GetOutlineLevelForStyle(string styleName, Models.StyleConfig? config = null)
         {
             return styleName switch
             {
-                "Normal" => 9,    // 正文文本不参与大纲
-                "Image" => 9,     // 图片段落不参与大纲
-                "Heading1" => 0,  // 一级标题 - 对应Word大纲级别0（最高级）
-                "Heading2" => 1,  // 二级标题 - 对应Word大纲级别1
-                "Heading3" => 2,  // 三级标题 - 对应Word大纲级别2
-                "Heading4" => 3,  // 四级标题 - 对应Word大纲级别3
-                _ => 9            // 其他级别
+                "Normal" => 9,        // 正文文本不参与大纲
+                "Image" => 9,         // 图片段落不参与大纲
+                "TableCaption" => config?.TableCaption.OutlineLevel ?? 9,   // 表格标题使用用户设置
+                "ImageCaption" => config?.ImageCaption.OutlineLevel ?? 9,   // 图形标题使用用户设置
+                "Heading1" => 0,      // 一级标题 - 对应Word大纲级别0（最高级）
+                "Heading2" => 1,      // 二级标题 - 对应Word大纲级别1
+                "Heading3" => 2,      // 三级标题 - 对应Word大纲级别2
+                "Heading4" => 3,      // 四级标题 - 对应Word大纲级别3
+                _ => 9                // 其他级别
             };
         }
 
         /// <summary>
         /// 为段落设置大纲级别
         /// </summary>
-        private void SetOutlineLevelForParagraph(XWPFParagraph paragraph, string styleName, Action<string> logMessage)
+        private void SetOutlineLevelForParagraph(XWPFParagraph paragraph, string styleName, Action<string> logMessage, Models.StyleConfig? config = null)
         {
             if (styleName == "Normal" || styleName == "Image")
             {
@@ -885,7 +952,7 @@ namespace WordTools2.Services
                 return;
             }
 
-            int targetLevel = GetOutlineLevelForStyle(styleName);
+            int targetLevel = GetOutlineLevelForStyle(styleName, config);
             
             // 设置大纲级别 - 使用XWPFParagraph API
             var paraCTP = paragraph.GetCTP();
@@ -900,6 +967,156 @@ namespace WordTools2.Services
             paraCTP.pPr.outlineLvl.val = targetLevel.ToString();
             
             logMessage($"设置大纲级别: 样式名={styleName}, 目标级别={targetLevel}");
+        }
+
+
+
+        /// <summary>
+        /// 处理文档中的所有表格格式设置
+        /// </summary>
+        private void ProcessTablesInDocument(XWPFDocument doc, Models.StyleConfig config, Action<string> logMessage)
+        {
+            try
+            {
+                var tables = doc.Tables.ToList();
+                if (tables.Count == 0)
+                {
+                    logMessage("文档中没有发现表格");
+                    return;
+                }
+
+                logMessage($"发现 {tables.Count} 个表格，开始处理表格格式");
+                
+                int processedTables = 0;
+                foreach (var table in tables)
+                {
+                    ProcessSingleTable(table, config, logMessage);
+                    processedTables++;
+                    
+                    if (processedTables % 5 == 0)
+                    {
+                        logMessage($"已处理 {processedTables}/{tables.Count} 个表格");
+                    }
+                }
+                
+                logMessage($"表格处理完成，共处理 {processedTables} 个表格");
+            }
+            catch (Exception ex)
+            {
+                logMessage($"处理表格时出错: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 处理单个表格的格式设置
+        /// </summary>
+        private void ProcessSingleTable(XWPFTable table, Models.StyleConfig config, Action<string> logMessage)
+        {
+            try
+            {
+                // 获取正文段落的字体名称（表格要保持一致）
+                string bodyFontName = config.Normal.FontName;
+                
+                // 处理表格中的所有行和单元格
+                foreach (var row in table.Rows)
+                {
+                    foreach (var cell in row.GetTableCells())
+                    {
+                        // 处理单元格中的所有段落
+                        foreach (var paragraph in cell.Paragraphs)
+                        {
+                            // 检查是否为表格内部的标题段落
+                            if (IsTableCaptionParagraph(paragraph))
+                            {
+                                // 对表格内部的标题应用表格标题格式
+                                ApplyStyleToParagraph(paragraph, config.TableCaption, "TableCaption", logMessage, config);
+                                logMessage($"处理表格内部标题：{paragraph.ParagraphText.Trim()}");
+                            }
+                            else
+                            {
+                                // 对普通表格段落应用标准表格格式
+                                ProcessTableParagraph(paragraph, bodyFontName, logMessage);
+                            }
+                        }
+                    }
+                }
+                
+                logMessage($"表格处理完成：字体名称={bodyFontName}，英文=Times New Roman，字号保持不变");
+            }
+            catch (Exception ex)
+            {
+                logMessage($"处理单个表格时出错: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 检查段落是否为表格标题（包括表格内部）
+        /// </summary>
+        private bool IsTableCaptionParagraph(XWPFParagraph paragraph)
+        {
+            // 获取段落文本
+            var text = paragraph.ParagraphText.Trim();
+            if (string.IsNullOrEmpty(text))
+            {
+                return false;
+            }
+
+            // 识别表格标题：以"表"开头，可能包含编号的段落
+            // 规则：以"表"开头，后跟数字编号（可选），然后是空格和中文内容
+            return Regex.IsMatch(text, @"^表\d*(\.\d+)*\s*[\u4e00-\u9fa5].*$");
+        }
+
+        /// <summary>
+        /// 处理表格段落的格式设置
+        /// </summary>
+        private void ProcessTableParagraph(XWPFParagraph paragraph, string bodyFontName, Action<string> logMessage)
+        {
+            try
+            {
+                // 跳过空段落
+                if (string.IsNullOrWhiteSpace(paragraph.ParagraphText))
+                {
+                    return;
+                }
+
+                // 设置段落中所有运行的字体属性
+                foreach (var run in paragraph.Runs)
+                {
+                    var runCTR = run.GetCTR();
+                    if (runCTR.rPr == null)
+                    {
+                        runCTR.AddNewRPr();
+                    }
+
+                    // 设置字体
+                    if (runCTR.rPr.rFonts == null)
+                    {
+                        runCTR.rPr.rFonts = new NPOI.OpenXmlFormats.Wordprocessing.CT_Fonts();
+                    }
+                    
+                    // 表格字体设置规则：
+                    // 1. 字体名称与正文段落保持一致
+                    // 2. 中文字符使用正文字体，非中文字符使用Times New Roman
+                    runCTR.rPr.rFonts.eastAsia = bodyFontName;    // 中文字符使用正文字体
+                    runCTR.rPr.rFonts.ascii = "Times New Roman";   // 英文字符使用Times New Roman
+                    runCTR.rPr.rFonts.hAnsi = "Times New Roman";   // 英文字符使用Times New Roman
+                    runCTR.rPr.rFonts.cs = "Times New Roman";      // 复杂脚本使用Times New Roman
+                    
+                    // 注意：不修改字体大小，保持表格原有的字号
+                }
+                
+                // 记录处理信息
+                string displayText = paragraph.ParagraphText.Trim();
+                if (displayText.Length > 30)
+                {
+                    displayText = displayText.Substring(0, 30) + "...";
+                }
+                logMessage($"表格段落处理: \"{displayText}\" - 中文字体={bodyFontName}, 英文字体=Times New Roman");
+            }
+            catch (Exception ex)
+            {
+                logMessage($"处理表格段落时出错: {ex.Message}");
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -27,6 +27,7 @@ partial class Form1
     private System.Windows.Forms.GroupBox grpHeading3;
     private System.Windows.Forms.GroupBox grpHeading4;
     private System.Windows.Forms.GroupBox grpNormal;
+    private System.Windows.Forms.GroupBox grpTableCaption;
     private System.Windows.Forms.TextBox txtFileName;
     private System.Windows.Forms.TextBox txtLog;
     private System.Windows.Forms.Label lblStatus;
@@ -62,6 +63,27 @@ partial class Form1
     private System.Windows.Forms.ComboBox cmbNormalSize;
     private System.Windows.Forms.NumericUpDown nudNormalLineSpacing;
     private System.Windows.Forms.Label lblNormalLineSpacing;
+
+    // Table Caption Controls
+    private System.Windows.Forms.ComboBox cmbTableCaptionFont;
+    private System.Windows.Forms.ComboBox cmbTableCaptionSize;
+    private System.Windows.Forms.ComboBox cmbTableCaptionOutlineLevel;
+    private System.Windows.Forms.CheckBox chkTableCaptionBold;
+    private System.Windows.Forms.Label lblTableCaptionFont;
+    private System.Windows.Forms.Label lblTableCaptionSize;
+    private System.Windows.Forms.Label lblTableCaptionOutlineLevel;
+    private System.Windows.Forms.Label lblTableCaptionBold;
+    private System.Windows.Forms.GroupBox grpImageCaption;
+
+    // Image Caption Controls
+    private System.Windows.Forms.ComboBox cmbImageCaptionFont;
+    private System.Windows.Forms.ComboBox cmbImageCaptionSize;
+    private System.Windows.Forms.ComboBox cmbImageCaptionOutlineLevel;
+    private System.Windows.Forms.CheckBox chkImageCaptionBold;
+    private System.Windows.Forms.Label lblImageCaptionFont;
+    private System.Windows.Forms.Label lblImageCaptionSize;
+    private System.Windows.Forms.Label lblImageCaptionOutlineLevel;
+    private System.Windows.Forms.Label lblImageCaptionBold;
 
     // Open/Save Dialogs
     private System.Windows.Forms.OpenFileDialog openFileDialog;
@@ -115,6 +137,15 @@ partial class Form1
         cmbNormalSize = new ComboBox();
         lblNormalLineSpacing = new Label();
         nudNormalLineSpacing = new NumericUpDown();
+        grpTableCaption = new GroupBox();
+        lblTableCaptionFont = new Label();
+        cmbTableCaptionFont = new ComboBox();
+        lblTableCaptionSize = new Label();
+        cmbTableCaptionSize = new ComboBox();
+        lblTableCaptionOutlineLevel = new Label();
+        cmbTableCaptionOutlineLevel = new ComboBox();
+        lblTableCaptionBold = new Label();
+        chkTableCaptionBold = new CheckBox();
         txtFileName = new TextBox();
         txtLog = new TextBox();
         lblStatus = new Label();
@@ -124,11 +155,20 @@ partial class Form1
         saveFileDialog = new SaveFileDialog();
         topPanel = new Panel();
         stylePanel = new Panel();
+        grpImageCaption = new GroupBox();
+        lblImageCaptionFont = new Label();
+        cmbImageCaptionFont = new ComboBox();
+        lblImageCaptionSize = new Label();
+        cmbImageCaptionSize = new ComboBox();
+        lblImageCaptionOutlineLevel = new Label();
+        cmbImageCaptionOutlineLevel = new ComboBox();
+        lblImageCaptionBold = new Label();
+        chkImageCaptionBold = new CheckBox();
         statusPanel = new Panel();
         lblStatusTitle = new Label();
-        lblLogTitle = new Label();
         footerPanel = new Panel();
         lblFooter = new Label();
+        logPanel = new Panel();
         grpHeading1.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)nudHeading1SpaceBefore).BeginInit();
         ((System.ComponentModel.ISupportInitialize)nudHeading1SpaceAfter).BeginInit();
@@ -143,10 +183,13 @@ partial class Form1
         ((System.ComponentModel.ISupportInitialize)nudHeading4SpaceAfter).BeginInit();
         grpNormal.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)nudNormalLineSpacing).BeginInit();
+        grpTableCaption.SuspendLayout();
         topPanel.SuspendLayout();
         stylePanel.SuspendLayout();
+        grpImageCaption.SuspendLayout();
         statusPanel.SuspendLayout();
         footerPanel.SuspendLayout();
+        logPanel.SuspendLayout();
         SuspendLayout();
         // 
         // btnOpen
@@ -542,9 +585,9 @@ partial class Form1
         grpNormal.Controls.Add(lblNormalLineSpacing);
         grpNormal.Controls.Add(nudNormalLineSpacing);
         grpNormal.Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Bold);
-        grpNormal.Location = new Point(12, 296);
+        grpNormal.Location = new Point(12, 435);
         grpNormal.Name = "grpNormal";
-        grpNormal.Size = new Size(646, 50);
+        grpNormal.Size = new Size(650, 50);
         grpNormal.TabIndex = 4;
         grpNormal.TabStop = false;
         grpNormal.Text = "正文段落";
@@ -601,14 +644,101 @@ partial class Form1
         nudNormalLineSpacing.TabIndex = 5;
         nudNormalLineSpacing.Value = new decimal(new int[] { 25, 0, 0, 0 });
         // 
+        // grpTableCaption
+        // 
+        grpTableCaption.Controls.Add(lblTableCaptionFont);
+        grpTableCaption.Controls.Add(cmbTableCaptionFont);
+        grpTableCaption.Controls.Add(lblTableCaptionSize);
+        grpTableCaption.Controls.Add(cmbTableCaptionSize);
+        grpTableCaption.Controls.Add(lblTableCaptionOutlineLevel);
+        grpTableCaption.Controls.Add(cmbTableCaptionOutlineLevel);
+        grpTableCaption.Controls.Add(lblTableCaptionBold);
+        grpTableCaption.Controls.Add(chkTableCaptionBold);
+        grpTableCaption.Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Bold);
+        grpTableCaption.Location = new Point(12, 297);
+        grpTableCaption.Name = "grpTableCaption";
+        grpTableCaption.Size = new Size(646, 65);
+        grpTableCaption.TabIndex = 5;
+        grpTableCaption.TabStop = false;
+        grpTableCaption.Text = "表格标题";
+        // 
+        // lblTableCaptionFont
+        // 
+        lblTableCaptionFont.Location = new Point(12, 25);
+        lblTableCaptionFont.Name = "lblTableCaptionFont";
+        lblTableCaptionFont.Size = new Size(50, 20);
+        lblTableCaptionFont.TabIndex = 0;
+        lblTableCaptionFont.Text = "字体:";
+        // 
+        // cmbTableCaptionFont
+        // 
+        cmbTableCaptionFont.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbTableCaptionFont.Items.AddRange(new object[] { "黑体", "宋体", "Microsoft YaHei UI", "仿宋", "楷体", "Arial", "Times New Roman" });
+        cmbTableCaptionFont.Location = new Point(68, 22);
+        cmbTableCaptionFont.Name = "cmbTableCaptionFont";
+        cmbTableCaptionFont.Size = new Size(150, 25);
+        cmbTableCaptionFont.TabIndex = 1;
+        // 
+        // lblTableCaptionSize
+        // 
+        lblTableCaptionSize.Location = new Point(230, 25);
+        lblTableCaptionSize.Name = "lblTableCaptionSize";
+        lblTableCaptionSize.Size = new Size(50, 20);
+        lblTableCaptionSize.TabIndex = 2;
+        lblTableCaptionSize.Text = "字号:";
+        // 
+        // cmbTableCaptionSize
+        // 
+        cmbTableCaptionSize.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbTableCaptionSize.Items.AddRange(new object[] { "初号", "小初", "一号", "小一", "二号", "小二", "三号", "小三", "四号", "小四", "五号", "小五", "六号", "小六", "七号" });
+        cmbTableCaptionSize.Location = new Point(286, 22);
+        cmbTableCaptionSize.Name = "cmbTableCaptionSize";
+        cmbTableCaptionSize.Size = new Size(80, 25);
+        cmbTableCaptionSize.TabIndex = 3;
+        // 
+        // lblTableCaptionOutlineLevel
+        // 
+        lblTableCaptionOutlineLevel.Location = new Point(386, 25);
+        lblTableCaptionOutlineLevel.Name = "lblTableCaptionOutlineLevel";
+        lblTableCaptionOutlineLevel.Size = new Size(70, 20);
+        lblTableCaptionOutlineLevel.TabIndex = 4;
+        lblTableCaptionOutlineLevel.Text = "大纲级别:";
+        // 
+        // cmbTableCaptionOutlineLevel
+        // 
+        cmbTableCaptionOutlineLevel.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbTableCaptionOutlineLevel.Items.AddRange(new object[] { "无(正文)", "1级", "2级", "3级", "4级", "5级", "6级", "7级", "8级", "9级" });
+        cmbTableCaptionOutlineLevel.Location = new Point(462, 22);
+        cmbTableCaptionOutlineLevel.Name = "cmbTableCaptionOutlineLevel";
+        cmbTableCaptionOutlineLevel.Size = new Size(80, 25);
+        cmbTableCaptionOutlineLevel.TabIndex = 5;
+        // 
+        // lblTableCaptionBold
+        // 
+        lblTableCaptionBold.AutoSize = true;
+        lblTableCaptionBold.Location = new Point(558, 25);
+        lblTableCaptionBold.Name = "lblTableCaptionBold";
+        lblTableCaptionBold.Size = new Size(35, 17);
+        lblTableCaptionBold.TabIndex = 6;
+        lblTableCaptionBold.Text = "加粗:";
+        // 
+        // chkTableCaptionBold
+        // 
+        chkTableCaptionBold.AutoSize = true;
+        chkTableCaptionBold.Location = new Point(605, 27);
+        chkTableCaptionBold.Name = "chkTableCaptionBold";
+        chkTableCaptionBold.Size = new Size(15, 14);
+        chkTableCaptionBold.TabIndex = 7;
+        chkTableCaptionBold.UseVisualStyleBackColor = true;
+        // 
         // txtFileName
         // 
         txtFileName.BackColor = Color.FromArgb(240, 240, 240);
         txtFileName.BorderStyle = BorderStyle.FixedSingle;
-        txtFileName.Location = new Point(340, 16);
+        txtFileName.Location = new Point(332, 18);
         txtFileName.Name = "txtFileName";
         txtFileName.ReadOnly = true;
-        txtFileName.Size = new Size(663, 23);
+        txtFileName.Size = new Size(659, 23);
         txtFileName.TabIndex = 3;
         txtFileName.Text = "未选择文件";
         // 
@@ -617,18 +747,18 @@ partial class Form1
         txtLog.BackColor = Color.FromArgb(250, 250, 250);
         txtLog.BorderStyle = BorderStyle.FixedSingle;
         txtLog.Font = new Font("Consolas", 8.5F);
-        txtLog.Location = new Point(12, 150);
+        txtLog.Location = new Point(3, 36);
         txtLog.Multiline = true;
         txtLog.Name = "txtLog";
         txtLog.ReadOnly = true;
         txtLog.ScrollBars = ScrollBars.Vertical;
-        txtLog.Size = new Size(290, 230);
-        txtLog.TabIndex = 5;
+        txtLog.Size = new Size(980, 80);
+        txtLog.TabIndex = 0;
         // 
         // lblStatus
         // 
         lblStatus.ForeColor = Color.FromArgb(16, 142, 234);
-        lblStatus.Location = new Point(12, 40);
+        lblStatus.Location = new Point(12, 782);
         lblStatus.Name = "lblStatus";
         lblStatus.Size = new Size(290, 20);
         lblStatus.TabIndex = 1;
@@ -636,16 +766,16 @@ partial class Form1
         // 
         // lblProgress
         // 
-        lblProgress.Location = new Point(12, 65);
+        lblProgress.Location = new Point(12, 20);
         lblProgress.Name = "lblProgress";
         lblProgress.Size = new Size(290, 20);
         lblProgress.TabIndex = 2;
         // 
         // progressBar
         // 
-        progressBar.Location = new Point(12, 90);
+        progressBar.Location = new Point(3, 13);
         progressBar.Name = "progressBar";
-        progressBar.Size = new Size(290, 20);
+        progressBar.Size = new Size(978, 17);
         progressBar.Style = ProgressBarStyle.Continuous;
         progressBar.TabIndex = 3;
         progressBar.Visible = false;
@@ -670,7 +800,7 @@ partial class Form1
         topPanel.Controls.Add(txtFileName);
         topPanel.Location = new Point(12, 12);
         topPanel.Name = "topPanel";
-        topPanel.Size = new Size(1008, 60);
+        topPanel.Size = new Size(1004, 60);
         topPanel.TabIndex = 0;
         // 
         // stylePanel
@@ -683,24 +813,107 @@ partial class Form1
         stylePanel.Controls.Add(grpHeading3);
         stylePanel.Controls.Add(grpHeading4);
         stylePanel.Controls.Add(grpNormal);
+        stylePanel.Controls.Add(grpTableCaption);
+        stylePanel.Controls.Add(grpImageCaption);
         stylePanel.Location = new Point(12, 78);
         stylePanel.Name = "stylePanel";
-        stylePanel.Size = new Size(663, 400);
+        stylePanel.Size = new Size(1004, 501);
         stylePanel.TabIndex = 1;
+        // 
+        // grpImageCaption
+        // 
+        grpImageCaption.Controls.Add(lblImageCaptionFont);
+        grpImageCaption.Controls.Add(cmbImageCaptionFont);
+        grpImageCaption.Controls.Add(lblImageCaptionSize);
+        grpImageCaption.Controls.Add(cmbImageCaptionSize);
+        grpImageCaption.Controls.Add(lblImageCaptionOutlineLevel);
+        grpImageCaption.Controls.Add(cmbImageCaptionOutlineLevel);
+        grpImageCaption.Controls.Add(lblImageCaptionBold);
+        grpImageCaption.Controls.Add(chkImageCaptionBold);
+        grpImageCaption.Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Bold);
+        grpImageCaption.Location = new Point(13, 363);
+        grpImageCaption.Name = "grpImageCaption";
+        grpImageCaption.Size = new Size(650, 65);
+        grpImageCaption.TabIndex = 6;
+        grpImageCaption.TabStop = false;
+        grpImageCaption.Text = "图形标题";
+        // 
+        // lblImageCaptionFont
+        // 
+        lblImageCaptionFont.Location = new Point(12, 25);
+        lblImageCaptionFont.Name = "lblImageCaptionFont";
+        lblImageCaptionFont.Size = new Size(50, 20);
+        lblImageCaptionFont.TabIndex = 0;
+        lblImageCaptionFont.Text = "字体:";
+        // 
+        // cmbImageCaptionFont
+        // 
+        cmbImageCaptionFont.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbImageCaptionFont.Items.AddRange(new object[] { "黑体", "宋体", "Microsoft YaHei UI", "仿宋", "楷体", "Arial", "Times New Roman" });
+        cmbImageCaptionFont.Location = new Point(68, 22);
+        cmbImageCaptionFont.Name = "cmbImageCaptionFont";
+        cmbImageCaptionFont.Size = new Size(150, 25);
+        cmbImageCaptionFont.TabIndex = 1;
+        // 
+        // lblImageCaptionSize
+        // 
+        lblImageCaptionSize.Location = new Point(230, 25);
+        lblImageCaptionSize.Name = "lblImageCaptionSize";
+        lblImageCaptionSize.Size = new Size(50, 20);
+        lblImageCaptionSize.TabIndex = 2;
+        lblImageCaptionSize.Text = "字号:";
+        // 
+        // cmbImageCaptionSize
+        // 
+        cmbImageCaptionSize.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbImageCaptionSize.Items.AddRange(new object[] { "初号", "小初", "一号", "小一", "二号", "小二", "三号", "小三", "四号", "小四", "五号", "小五", "六号", "小六", "七号" });
+        cmbImageCaptionSize.Location = new Point(286, 22);
+        cmbImageCaptionSize.Name = "cmbImageCaptionSize";
+        cmbImageCaptionSize.Size = new Size(80, 25);
+        cmbImageCaptionSize.TabIndex = 3;
+        // 
+        // lblImageCaptionOutlineLevel
+        // 
+        lblImageCaptionOutlineLevel.Location = new Point(386, 25);
+        lblImageCaptionOutlineLevel.Name = "lblImageCaptionOutlineLevel";
+        lblImageCaptionOutlineLevel.Size = new Size(70, 20);
+        lblImageCaptionOutlineLevel.TabIndex = 4;
+        lblImageCaptionOutlineLevel.Text = "大纲级别:";
+        // 
+        // cmbImageCaptionOutlineLevel
+        // 
+        cmbImageCaptionOutlineLevel.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbImageCaptionOutlineLevel.Items.AddRange(new object[] { "无(正文)", "1级", "2级", "3级", "4级", "5级", "6级", "7级", "8级", "9级" });
+        cmbImageCaptionOutlineLevel.Location = new Point(462, 22);
+        cmbImageCaptionOutlineLevel.Name = "cmbImageCaptionOutlineLevel";
+        cmbImageCaptionOutlineLevel.Size = new Size(80, 25);
+        cmbImageCaptionOutlineLevel.TabIndex = 5;
+        // 
+        // lblImageCaptionBold
+        // 
+        lblImageCaptionBold.Location = new Point(558, 25);
+        lblImageCaptionBold.Name = "lblImageCaptionBold";
+        lblImageCaptionBold.Size = new Size(45, 20);
+        lblImageCaptionBold.TabIndex = 6;
+        lblImageCaptionBold.Text = "加粗:";
+        // 
+        // chkImageCaptionBold
+        // 
+        chkImageCaptionBold.Location = new Point(605, 27);
+        chkImageCaptionBold.Name = "chkImageCaptionBold";
+        chkImageCaptionBold.Size = new Size(15, 14);
+        chkImageCaptionBold.TabIndex = 7;
+        chkImageCaptionBold.UseVisualStyleBackColor = true;
         // 
         // statusPanel
         // 
         statusPanel.BackColor = Color.FromArgb(255, 255, 255);
         statusPanel.BorderStyle = BorderStyle.FixedSingle;
         statusPanel.Controls.Add(lblStatusTitle);
-        statusPanel.Controls.Add(lblStatus);
         statusPanel.Controls.Add(lblProgress);
-        statusPanel.Controls.Add(progressBar);
-        statusPanel.Controls.Add(lblLogTitle);
-        statusPanel.Controls.Add(txtLog);
-        statusPanel.Location = new Point(696, 78);
+        statusPanel.Location = new Point(12, 444);
         statusPanel.Name = "statusPanel";
-        statusPanel.Size = new Size(320, 400);
+        statusPanel.Size = new Size(1004, 70);
         statusPanel.TabIndex = 2;
         // 
         // lblStatusTitle
@@ -710,22 +923,15 @@ partial class Form1
         lblStatusTitle.Size = new Size(100, 23);
         lblStatusTitle.TabIndex = 0;
         // 
-        // lblLogTitle
-        // 
-        lblLogTitle.Location = new Point(0, 0);
-        lblLogTitle.Name = "lblLogTitle";
-        lblLogTitle.Size = new Size(100, 23);
-        lblLogTitle.TabIndex = 4;
-        // 
         // footerPanel
         // 
         footerPanel.BackColor = Color.FromArgb(240, 240, 240);
         footerPanel.BorderStyle = BorderStyle.FixedSingle;
         footerPanel.Controls.Add(lblFooter);
-        footerPanel.Location = new Point(12, 484);
+        footerPanel.Location = new Point(13, 717);
         footerPanel.Name = "footerPanel";
-        footerPanel.Size = new Size(1004, 40);
-        footerPanel.TabIndex = 3;
+        footerPanel.Size = new Size(1004, 59);
+        footerPanel.TabIndex = 4;
         // 
         // lblFooter
         // 
@@ -734,19 +940,32 @@ partial class Form1
         lblFooter.Size = new Size(100, 23);
         lblFooter.TabIndex = 0;
         // 
+        // logPanel
+        // 
+        logPanel.BackColor = Color.FromArgb(255, 255, 255);
+        logPanel.BorderStyle = BorderStyle.FixedSingle;
+        logPanel.Controls.Add(progressBar);
+        logPanel.Controls.Add(txtLog);
+        logPanel.Location = new Point(13, 585);
+        logPanel.Name = "logPanel";
+        logPanel.Size = new Size(1004, 126);
+        logPanel.TabIndex = 3;
+        // 
         // Form1
         // 
         AllowDrop = true;
         AutoScaleDimensions = new SizeF(96F, 96F);
         AutoScaleMode = AutoScaleMode.Dpi;
         BackColor = Color.FromArgb(243, 243, 243);
-        ClientSize = new Size(1029, 661);
+        ClientSize = new Size(1057, 808);
         Controls.Add(topPanel);
+        Controls.Add(lblStatus);
         Controls.Add(stylePanel);
         Controls.Add(statusPanel);
+        Controls.Add(logPanel);
         Controls.Add(footerPanel);
         Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 134);
-        MinimumSize = new Size(900, 700);
+        MinimumSize = new Size(900, 800);
         Name = "Form1";
         StartPosition = FormStartPosition.CenterScreen;
         Text = "Word 文档排版工具";
@@ -765,12 +984,16 @@ partial class Form1
         ((System.ComponentModel.ISupportInitialize)nudHeading4SpaceAfter).EndInit();
         grpNormal.ResumeLayout(false);
         ((System.ComponentModel.ISupportInitialize)nudNormalLineSpacing).EndInit();
+        grpTableCaption.ResumeLayout(false);
+        grpTableCaption.PerformLayout();
         topPanel.ResumeLayout(false);
         topPanel.PerformLayout();
         stylePanel.ResumeLayout(false);
+        grpImageCaption.ResumeLayout(false);
         statusPanel.ResumeLayout(false);
-        statusPanel.PerformLayout();
         footerPanel.ResumeLayout(false);
+        logPanel.ResumeLayout(false);
+        logPanel.PerformLayout();
         ResumeLayout(false);
     }
 
@@ -798,7 +1021,7 @@ partial class Form1
     private Panel stylePanel;
     private Panel statusPanel;
     private Label lblStatusTitle;
-    private Label lblLogTitle;
     private Panel footerPanel;
     private Label lblFooter;
+    private Panel logPanel;
 }

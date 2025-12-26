@@ -101,6 +101,30 @@ public partial class Form1 : Form
         cmbNormalFont.SelectedItem = _styleConfig.Normal.FontName;
         cmbNormalSize.SelectedItem = GetChineseFontSize(_styleConfig.Normal.FontSize);
         nudNormalLineSpacing.Value = (decimal)_styleConfig.Normal.LineSpacing;
+
+        // 表格标题配置
+        cmbTableCaptionFont.SelectedItem = _styleConfig.TableCaption.FontName;
+        cmbTableCaptionSize.SelectedItem = GetChineseFontSize(_styleConfig.TableCaption.FontSize);
+        
+        // 设置大纲级别
+        int outlineLevel = _styleConfig.TableCaption.OutlineLevel;
+        if (outlineLevel < 0) outlineLevel = 9; // 确保有效值
+        cmbTableCaptionOutlineLevel.SelectedIndex = outlineLevel + 1; // +1因为第0项是"无(正文)"
+        
+        // 设置加粗
+        chkTableCaptionBold.Checked = _styleConfig.TableCaption.Bold;
+        
+        // 图形标题配置
+        cmbImageCaptionFont.SelectedItem = _styleConfig.ImageCaption.FontName;
+        cmbImageCaptionSize.SelectedItem = GetChineseFontSize(_styleConfig.ImageCaption.FontSize);
+        
+        // 设置大纲级别
+        int imageOutlineLevel = _styleConfig.ImageCaption.OutlineLevel;
+        if (imageOutlineLevel < 0) imageOutlineLevel = 9; // 确保有效值
+        cmbImageCaptionOutlineLevel.SelectedIndex = imageOutlineLevel + 1; // +1因为第0项是"无(正文)"
+        
+        // 设置加粗
+        chkImageCaptionBold.Checked = _styleConfig.ImageCaption.Bold;
     }
 
     /// <summary>
@@ -118,6 +142,8 @@ public partial class Form1 : Form
         }
         return "小四"; // 默认返回小四
     }
+
+
 
     /// <summary>
     /// 保存配置到文件
@@ -185,6 +211,7 @@ public partial class Form1 : Form
                 LogMessage($"  二级标题: {stats["Heading2"]}");
                 LogMessage($"  三级标题: {stats["Heading3"]}");
                 LogMessage($"  四级标题: {stats["Heading4"]}");
+                LogMessage($"  表格标题: {stats["TableCaption"]}");
                 
                 if (stats["Other"] > 0)
                     LogMessage($"  其他格式: {stats["Other"]}");
@@ -315,6 +342,30 @@ public partial class Form1 : Form
         _styleConfig.Normal.FontName = cmbNormalFont.SelectedItem?.ToString() ?? "宋体";
         _styleConfig.Normal.FontSize = _fontSizeMap[cmbNormalSize.SelectedItem?.ToString() ?? "五号"];
         _styleConfig.Normal.LineSpacing = (double)nudNormalLineSpacing.Value;
+
+        // 表格标题配置
+        _styleConfig.TableCaption.FontName = cmbTableCaptionFont.SelectedItem?.ToString() ?? "黑体";
+        _styleConfig.TableCaption.FontSize = _fontSizeMap[cmbTableCaptionSize.SelectedItem?.ToString() ?? "五号"];
+        
+        // 设置大纲级别
+        int outlineLevel = cmbTableCaptionOutlineLevel.SelectedIndex - 1; // -1因为第0项是"无(正文)"
+        if (outlineLevel < 0) outlineLevel = 9; // 如果选择"无(正文)"，设置为9
+        _styleConfig.TableCaption.OutlineLevel = outlineLevel;
+        
+        // 设置加粗
+        _styleConfig.TableCaption.Bold = chkTableCaptionBold.Checked;
+        
+        // 图形标题配置
+        _styleConfig.ImageCaption.FontName = cmbImageCaptionFont.SelectedItem?.ToString() ?? "黑体";
+        _styleConfig.ImageCaption.FontSize = _fontSizeMap[cmbImageCaptionSize.SelectedItem?.ToString() ?? "五号"];
+        
+        // 设置大纲级别
+        int imageOutlineLevel = cmbImageCaptionOutlineLevel.SelectedIndex - 1; // -1因为第0项是"无(正文)"
+        if (imageOutlineLevel < 0) imageOutlineLevel = 9; // 如果选择"无(正文)"，设置为9
+        _styleConfig.ImageCaption.OutlineLevel = imageOutlineLevel;
+        
+        // 设置加粗
+        _styleConfig.ImageCaption.Bold = chkImageCaptionBold.Checked;
     }
 
     private void UpdateProgress(string progress)

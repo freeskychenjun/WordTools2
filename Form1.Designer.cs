@@ -1,4 +1,8 @@
-﻿namespace WordTools2;
+﻿using System;
+using System.Drawing;
+using System.Windows.Forms;
+
+namespace WordTools2;
 
 partial class Form1
 {

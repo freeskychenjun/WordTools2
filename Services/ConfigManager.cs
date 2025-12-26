@@ -1,3 +1,4 @@
+using System;
 using System.Text.Json;
 using System.IO;
 using WordTools2.Models;
@@ -14,7 +15,7 @@ namespace WordTools2.Services
         /// <summary>
         /// 保存配置到文件
         /// </summary>
-        public static void SaveConfig(StyleConfig config)
+        public static void SaveConfig(Models.StyleConfig config)
         {
             try
             {
@@ -36,20 +37,20 @@ namespace WordTools2.Services
         /// <summary>
         /// 从文件读取配置
         /// </summary>
-        public static StyleConfig LoadConfig()
+        public static Models.StyleConfig LoadConfig()
         {
             try
             {
                 if (File.Exists(_configPath))
                 {
                     string jsonString = File.ReadAllText(_configPath);
-                    var config = JsonSerializer.Deserialize<StyleConfig>(jsonString);
-                    return config ?? new StyleConfig();
+                    var config = JsonSerializer.Deserialize<Models.StyleConfig>(jsonString);
+                    return config ?? new Models.StyleConfig();
                 }
                 else
                 {
                     // 如果配置文件不存在，返回默认配置
-                    var defaultConfig = new StyleConfig();
+                    var defaultConfig = new Models.StyleConfig();
                     SaveConfig(defaultConfig);
                     return defaultConfig;
                 }

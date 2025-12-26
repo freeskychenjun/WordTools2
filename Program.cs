@@ -1,3 +1,6 @@
+using System;
+using System.Windows.Forms;
+
 namespace WordTools2;
 
 internal static class Program

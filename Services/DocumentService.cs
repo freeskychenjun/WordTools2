@@ -1,5 +1,8 @@
 using NPOI.XWPF.UserModel;
 using WordTools2.Models;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -72,7 +75,7 @@ namespace WordTools2.Services
         /// <summary>
         /// 应用样式配置到文档
         /// </summary>
-        public void ApplyStyles(StyleConfig config, Action<string> updateProgress, Action<string> logMessage)
+        public void ApplyStyles(Models.StyleConfig config, Action<string> updateProgress, Action<string> logMessage)
         {
             if (_originalFilePath == null)
                 throw new Exception("请先打开一个文档");
@@ -116,7 +119,21 @@ namespace WordTools2.Services
                             // 通过正则表达式识别段落样式类型
                             var inferredStyle = InferStyleFromParagraph(paragraph, config);
                             
-                            // 应用识别出的样式格式
+                            // 对图片段落应用专用样式
+                            if (inferredStyle == "Image")
+                            {
+                                ApplyImageParagraphStyle(paragraph, logMessage);
+                                logMessage("处理图片段落：应用单倍行距和0间距");
+                                processed++;
+                                if (processed % 10 == 0)
+                                {
+                                    var percent = (int)((double)processed / total * 100);
+                                    updateProgress($"处理中... {percent}%");
+                                }
+                                continue; // 继续处理下一个段落
+                            }
+                            
+                            // 应用识别出的样式格式（仅对非图片段落）
                             if (!string.IsNullOrEmpty(inferredStyle))
                             {
                                 var style = GetParagraphStyle(inferredStyle, config);
@@ -238,6 +255,7 @@ namespace WordTools2.Services
                 { "Heading2", 0 },    // 2级标题
                 { "Heading3", 0 },    // 3级标题
                 { "Heading4", 0 },    // 4级标题
+                { "Image", 0 },       // 图片段落
                 { "Other", 0 }        // 其他格式
             };
 
@@ -246,6 +264,13 @@ namespace WordTools2.Services
 
             foreach (var paragraph in _document.Paragraphs)
             {
+                // 首先检查是否为图片段落
+                if (IsImageParagraph(paragraph))
+                {
+                    stats["Image"]++;
+                    continue;
+                }
+                
                 // 获取段落文本
                 var text = paragraph.ParagraphText.Trim();
                 
@@ -310,6 +335,13 @@ namespace WordTools2.Services
         {
             // 首先获取段落文本用于调试
             var text = paragraph.ParagraphText.Trim();
+
+            // 跳过图片段落，不进行任何格式设置
+            if (styleName == "Image")
+            {
+                logMessage("跳过图片段落，不应用任何格式设置");
+                return;
+            }
 
             // 设置大纲级别和格式
             SetOutlineLevelForParagraph(paragraph, styleName, logMessage);
@@ -389,6 +421,51 @@ namespace WordTools2.Services
         }
 
         /// <summary>
+        /// 为图片段落应用专用样式：段前间距和段后间距都设置为0磅，行距设为单倍行距
+        /// </summary>
+        private void ApplyImageParagraphStyle(XWPFParagraph paragraph, Action<string> logMessage)
+        {
+            var text = paragraph.ParagraphText.Trim();
+            
+            // 确保段落属性存在
+            var paraCTP = paragraph.GetCTP();
+            if (paraCTP.pPr == null)
+            {
+                paraCTP.AddNewPPr();
+            }
+            if (paraCTP.pPr.spacing == null)
+            {
+                paraCTP.pPr.spacing = new NPOI.OpenXmlFormats.Wordprocessing.CT_Spacing();
+            }
+
+            // 图片段落专用设置：段前间距和段后间距都设置为0磅
+            paraCTP.pPr.spacing.before = 0; // 段前间距0磅
+            paraCTP.pPr.spacing.after = 0;  // 段后间距0磅
+            
+            // 强制设置单倍行距 - 清除任何可能影响行距的设置
+            paraCTP.pPr.spacing.line = "240"; // 单倍行距（240缇，即12磅）
+            paraCTP.pPr.spacing.lineRule = NPOI.OpenXmlFormats.Wordprocessing.ST_LineSpacingRule.auto;
+
+            // 确保行距设置为单倍行距
+            if (paraCTP.pPr.spacing.line != "240")
+            {
+                paraCTP.pPr.spacing.line = "240"; // 确保行距为单倍行距
+            }
+            if (paraCTP.pPr.spacing.lineRule != NPOI.OpenXmlFormats.Wordprocessing.ST_LineSpacingRule.auto)
+            {
+                paraCTP.pPr.spacing.lineRule = NPOI.OpenXmlFormats.Wordprocessing.ST_LineSpacingRule.auto; // 确保行距规则为自动
+            }
+
+            // 图片段落不设置大纲级别
+            logMessage($"应用图片段落样式: 段前距=0磅, 段后距=0磅, 行距=单倍行距");
+            
+            // 对于包含图片的段落，通常不需要设置字体属性，因为图片本身没有字体
+            // 但为了保持一致性，我们仍然记录日志
+            string displayText = text.Length > 30 ? text.Substring(0, 30) + "..." : text;
+            logMessage($"图片段落处理完成: 包含图片的段落，文本内容: \"{displayText}\"");
+        }
+
+        /// <summary>
         /// 检查原始文档的样式定义，诊断大纲级别问题
         /// </summary>
         private void CheckOriginalDocumentStyles(Action<string> logMessage)
@@ -409,10 +486,78 @@ namespace WordTools2.Services
         }
 
         /// <summary>
+        /// 检测段落是否包含图片
+        /// </summary>
+        private bool IsImageParagraph(XWPFParagraph paragraph)
+        {
+            try
+            {
+                // 获取段落的CT_P对象
+                var paragraphCTP = paragraph.GetCTP();
+                
+                // 检查段落是否包含drawing元素
+                if (paragraphCTP.Items != null)
+                {
+                    foreach (var item in paragraphCTP.Items)
+                    {
+                        if (item.GetType().Name.Contains("Drawing") || 
+                            item.GetType().Name.Contains("Picture") ||
+                            item.GetType().Name.Contains("Graphic"))
+                        {
+                            return true;
+                        }
+                    }
+                }
+                
+                // 检查段落中的运行元素是否包含图片
+                foreach (var run in paragraph.Runs)
+                {
+                    // 获取运行元素的CT_R对象
+                    var runCTR = run.GetCTR();
+                    
+                    // 检查Run是否包含drawing元素
+                    if (runCTR.Items != null)
+                    {
+                        foreach (var item in runCTR.Items)
+                        {
+                            if (item.GetType().Name.Contains("Drawing") || 
+                                item.GetType().Name.Contains("Picture") ||
+                                item.GetType().Name.Contains("Graphic") ||
+                                item.GetType().Name.Contains("Object"))
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                
+                // 特别处理：如果段落文本为空但包含运行元素，可能是图片
+                if (string.IsNullOrEmpty(paragraph.ParagraphText?.Trim()) && paragraph.Runs.Count > 0)
+                {
+                    return true;
+                }
+                
+                return false;
+            }
+            catch (Exception ex)
+            {
+                // 如果检测出错，记录错误并保守处理，不认为是图片段落
+                System.Diagnostics.Debug.WriteLine($"检测图片段落时出错: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
         /// 根据段落文本格式推断样式类型（通过正则表达式识别标题编号）
         /// </summary>
-        private string InferStyleFromParagraph(XWPFParagraph paragraph, StyleConfig config)
+        private string InferStyleFromParagraph(XWPFParagraph paragraph, Models.StyleConfig config)
         {
+            // 首先检查是否为图片段落
+            if (IsImageParagraph(paragraph))
+            {
+                return "Image"; // 图片段落
+            }
+            
             // 获取段落文本
             var text = paragraph.ParagraphText.Trim();
             if (string.IsNullOrEmpty(text))
@@ -604,7 +749,7 @@ namespace WordTools2.Services
             details["Text"] = text;
             
             // 通过正则表达式推断样式类型
-            string inferredStyle = InferStyleFromParagraph(paragraph, new StyleConfig());
+            string inferredStyle = InferStyleFromParagraph(paragraph, new Models.StyleConfig());
             details["StyleType"] = inferredStyle;
             
             // 获取字体名称
@@ -629,7 +774,7 @@ namespace WordTools2.Services
         /// <summary>
         /// 根据样式名称获取对应的段落样式配置
         /// </summary>
-        private ParagraphStyle? GetParagraphStyle(string styleName, StyleConfig config)
+        private ParagraphStyle? GetParagraphStyle(string styleName, Models.StyleConfig config)
         {
             return styleName switch
             {
@@ -638,7 +783,23 @@ namespace WordTools2.Services
                 "Heading3" => config.Heading3,
                 "Heading4" => config.Heading4,
                 "Normal" => config.Normal,
+                "Image" => CreateImageParagraphStyle(),
                 _ => config.Normal
+            };
+        }
+
+        /// <summary>
+        /// 创建图片段落的专用样式配置
+        /// </summary>
+        private ParagraphStyle CreateImageParagraphStyle()
+        {
+            return new ParagraphStyle
+            {
+                FontName = "宋体",        // 图片段落不需要特殊字体
+                FontSize = 10.5,          // 默认字体大小
+                SpaceBefore = 0,          // 段前间距0磅
+                SpaceAfter = 0,           // 段后间距0磅
+                LineSpacing = 1.0         // 单倍行距
             };
         }
 
@@ -697,6 +858,7 @@ namespace WordTools2.Services
             return styleName switch
             {
                 "Normal" => 9,    // 正文文本不参与大纲
+                "Image" => 9,     // 图片段落不参与大纲
                 "Heading1" => 0,  // 一级标题 - 对应Word大纲级别0（最高级）
                 "Heading2" => 1,  // 二级标题 - 对应Word大纲级别1
                 "Heading3" => 2,  // 三级标题 - 对应Word大纲级别2
@@ -710,9 +872,16 @@ namespace WordTools2.Services
         /// </summary>
         private void SetOutlineLevelForParagraph(XWPFParagraph paragraph, string styleName, Action<string> logMessage)
         {
-            if (styleName == "Normal")
+            if (styleName == "Normal" || styleName == "Image")
             {
-                logMessage($"正文段落：不设置大纲级别");
+                if (styleName == "Normal")
+                {
+                    logMessage($"正文段落：不设置大纲级别");
+                }
+                else
+                {
+                    logMessage($"图片段落：不设置大纲级别");
+                }
                 return;
             }
 

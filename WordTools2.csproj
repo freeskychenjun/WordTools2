@@ -1,13 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
-    <Nullable>enable</Nullable>
+    <Nullable>disable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
-    <ImplicitUsings>enable</ImplicitUsings>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <EnableDefaultNoneItems>false</EnableDefaultNoneItems>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,24 +16,14 @@
     <Compile Include="Program.cs" />
     <Compile Include="Form1.cs" />
     <Compile Include="Form1.Designer.cs" />
-    <Compile Include="Models\**\*.cs" />
-    <Compile Include="Services\**\*.cs" />
-    <None Include="test.docx" />
+    <Compile Include="Models\StyleConfig.cs" />
+    <Compile Include="Models\ParagraphStyle.cs" />
+    <Compile Include="Services\ConfigManager.cs" />
+    <Compile Include="Services\DocumentService.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="ComprehensiveTest.cs" />
-    <None Remove="ConsoleTest.csproj" />
-    <None Remove="DebugProject.csproj" />
-    <None Remove="FinalTest.cs" />
-    <None Remove="FontNameTest.cs" />
-    <None Remove="FontSizeTest.cs" />
-    <None Remove="SimpleTest.cs" />
-    <None Remove="TestDocumentService.cs" />
-    <None Remove="TestProgram.cs" />
-    <None Remove="TestProject.csproj" />
-    <None Remove="TestStats.cs" />
-    <None Remove="debug_check.cs" />
+    <None Include="test.docx" />
   </ItemGroup>
 
 </Project>

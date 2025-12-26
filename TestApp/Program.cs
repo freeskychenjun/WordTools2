@@ -5,7 +5,7 @@ using System.IO;
 using NPOI.XWPF.UserModel;
 using NPOI.OpenXmlFormats.Wordprocessing;
 
-namespace ComprehensiveTest
+namespace TestApp
 {
     class Program
     {
@@ -89,6 +89,29 @@ namespace ComprehensiveTest
                     };
                     
                     Console.WriteLine("\n=== 测试样式应用功能 ===");
+                    
+                    // 先手动测试图片段落识别
+                    Console.WriteLine("\n=== 测试图片段落识别 ===");
+                    var document = new XWPFDocument(new FileStream(testFilePath, FileMode.Open, FileAccess.Read));
+                    int imageCount = 0;
+                    foreach (var para in document.Paragraphs)
+                    {
+                        if (documentService.GetType().GetMethod("IsImageParagraph", 
+                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance) != null)
+                        {
+                            var method = documentService.GetType().GetMethod("IsImageParagraph", 
+                                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                            bool isImage = (bool)method.Invoke(documentService, new object[] { para });
+                            if (isImage)
+                            {
+                                imageCount++;
+                                Console.WriteLine($"检测到图片段落: {para.ParagraphText}");
+                            }
+                        }
+                    }
+                    document.Close();
+                    Console.WriteLine($"总共检测到 {imageCount} 个图片段落");
+                    
                     documentService.ApplyStyles(config, 
                         (progress) => Console.WriteLine($"进度: {progress}"), 
                         (log) => Console.WriteLine($"日志: {log}"));
@@ -262,6 +285,45 @@ namespace ComprehensiveTest
                     rPr4.sz = new CT_HpsMeasure();
                 }
                 rPr4.sz.val = (ulong)(10.5 * 2); // 10.5磅 = 21半点
+                
+                // 创建一个空段落（模拟图片段落）
+                var para5 = document.CreateParagraph();
+                var run5 = para5.CreateRun();
+                run5.SetText(""); // 图片段落通常没有文本内容
+                
+                // 手动添加一个包含drawing标记的段落来测试图片识别
+                // 使用XML方式直接创建一个包含drawing的段落
+                var para6 = document.CreateParagraph();
+                var run6 = para6.CreateRun();
+                
+                // 在run的XML中直接添加drawing标记
+                var ctr = run6.GetCTR();
+                
+                // 创建drawing元素
+                var drawingElement = ctr.AddNewDrawing();
+                var inlineElement = drawingElement.AddNewInline();
+                
+                // 设置基本属性
+                var extent = inlineElement.AddNewExtent();
+                extent.cx = 2000000; // 宽度
+                extent.cy = 1500000; // 高度
+                
+                // 添加文档属性
+                var docPr = inlineElement.AddNewDocPr();
+                docPr.id = 1;
+                docPr.name = "TestImage";
+                docPr.descr = "测试图片";
+                
+                // 添加graphic元素
+                var graphic = inlineElement.AddNewGraphic();
+                var graphicData = graphic.AddNewGraphicData();
+                graphicData.uri = "http://schemas.openxmlformats.org/drawingml/2006/picture";
+                
+                // 添加pic元素
+                var pic = new NPOI.OpenXmlFormats.Drawing.Picture();
+                graphicData.AddPic(pic);
+                
+                // 这个段落应该被识别为包含图片的段落
                 
                 // 保存文档
                 using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))

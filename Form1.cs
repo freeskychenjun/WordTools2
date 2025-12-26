@@ -1,12 +1,21 @@
-using WordTools2.Services;
-using WordTools2.Models;
+using StyleConfigModel = WordTools2.Models.StyleConfig;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace WordTools2;
 
 public partial class Form1 : Form
 {
-    private readonly DocumentService _documentService = new DocumentService();
-    private Models.StyleConfig _styleConfig = new Models.StyleConfig();
+    private readonly WordTools2.Services.DocumentService _documentService = new WordTools2.Services.DocumentService();
+    private WordTools2.Models.StyleConfig _styleConfig = new WordTools2.Models.StyleConfig();
     private string? _currentFilePath;
 
     // 中文字体大小与数值大小的对应关系
@@ -54,7 +63,7 @@ public partial class Form1 : Form
     {
         try
         {
-            _styleConfig = ConfigManager.LoadConfig();
+            _styleConfig = WordTools2.Services.ConfigManager.LoadConfig();
             ApplyConfigToUI();
         }
         catch (Exception ex)
@@ -118,7 +127,7 @@ public partial class Form1 : Form
         try
         {
             CollectStyleConfig();
-            ConfigManager.SaveConfig(_styleConfig);
+            WordTools2.Services.ConfigManager.SaveConfig(_styleConfig);
         }
         catch (Exception ex)
         {

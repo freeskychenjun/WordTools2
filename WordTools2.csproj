@@ -6,6 +6,7 @@
     <Nullable>disable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>WordFormatter</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

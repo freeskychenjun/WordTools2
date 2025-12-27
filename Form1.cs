@@ -83,24 +83,28 @@ public partial class Form1 : Form
         nudHeading1SpaceBefore.Value = (decimal)_styleConfig.Heading1.SpaceBefore;
         nudHeading1SpaceAfter.Value = (decimal)_styleConfig.Heading1.SpaceAfter;
         nudHeading1LineSpacing.Value = (decimal)_styleConfig.Heading1.LineSpacing;
+        chkHeading1Bold.Checked = _styleConfig.Heading1.Bold;
 
         cmbHeading2Font.SelectedItem = _styleConfig.Heading2.FontName;
         cmbHeading2Size.SelectedItem = GetChineseFontSize(_styleConfig.Heading2.FontSize);
         nudHeading2SpaceBefore.Value = (decimal)_styleConfig.Heading2.SpaceBefore;
         nudHeading2SpaceAfter.Value = (decimal)_styleConfig.Heading2.SpaceAfter;
         nudHeading2LineSpacing.Value = (decimal)_styleConfig.Heading2.LineSpacing;
+        chkHeading2Bold.Checked = _styleConfig.Heading2.Bold;
 
         cmbHeading3Font.SelectedItem = _styleConfig.Heading3.FontName;
         cmbHeading3Size.SelectedItem = GetChineseFontSize(_styleConfig.Heading3.FontSize);
         nudHeading3SpaceBefore.Value = (decimal)_styleConfig.Heading3.SpaceBefore;
         nudHeading3SpaceAfter.Value = (decimal)_styleConfig.Heading3.SpaceAfter;
         nudHeading3LineSpacing.Value = (decimal)_styleConfig.Heading3.LineSpacing;
+        chkHeading3Bold.Checked = _styleConfig.Heading3.Bold;
 
         cmbHeading4Font.SelectedItem = _styleConfig.Heading4.FontName;
         cmbHeading4Size.SelectedItem = GetChineseFontSize(_styleConfig.Heading4.FontSize);
         nudHeading4SpaceBefore.Value = (decimal)_styleConfig.Heading4.SpaceBefore;
         nudHeading4SpaceAfter.Value = (decimal)_styleConfig.Heading4.SpaceAfter;
         nudHeading4LineSpacing.Value = (decimal)_styleConfig.Heading4.LineSpacing;
+        chkHeading4Bold.Checked = _styleConfig.Heading4.Bold;
 
         cmbNormalFont.SelectedItem = _styleConfig.Normal.FontName;
         cmbNormalSize.SelectedItem = GetChineseFontSize(_styleConfig.Normal.FontSize);
@@ -328,24 +332,28 @@ public partial class Form1 : Form
         _styleConfig.Heading1.SpaceBefore = (double)nudHeading1SpaceBefore.Value;
         _styleConfig.Heading1.SpaceAfter = (double)nudHeading1SpaceAfter.Value;
         _styleConfig.Heading1.LineSpacing = (double)nudHeading1LineSpacing.Value;
+        _styleConfig.Heading1.Bold = chkHeading1Bold.Checked;
 
         _styleConfig.Heading2.FontName = cmbHeading2Font.SelectedItem?.ToString() ?? "Microsoft YaHei UI";
         _styleConfig.Heading2.FontSize = _fontSizeMap[cmbHeading2Size.SelectedItem?.ToString() ?? "四号"];
         _styleConfig.Heading2.SpaceBefore = (double)nudHeading2SpaceBefore.Value;
         _styleConfig.Heading2.SpaceAfter = (double)nudHeading2SpaceAfter.Value;
         _styleConfig.Heading2.LineSpacing = (double)nudHeading2LineSpacing.Value;
+        _styleConfig.Heading2.Bold = chkHeading2Bold.Checked;
 
         _styleConfig.Heading3.FontName = cmbHeading3Font.SelectedItem?.ToString() ?? "Microsoft YaHei UI";
         _styleConfig.Heading3.FontSize = _fontSizeMap[cmbHeading3Size.SelectedItem?.ToString() ?? "小四"];
         _styleConfig.Heading3.SpaceBefore = (double)nudHeading3SpaceBefore.Value;
         _styleConfig.Heading3.SpaceAfter = (double)nudHeading3SpaceAfter.Value;
         _styleConfig.Heading3.LineSpacing = (double)nudHeading3LineSpacing.Value;
+        _styleConfig.Heading3.Bold = chkHeading3Bold.Checked;
 
         _styleConfig.Heading4.FontName = cmbHeading4Font.SelectedItem?.ToString() ?? "Microsoft YaHei UI";
         _styleConfig.Heading4.FontSize = _fontSizeMap[cmbHeading4Size.SelectedItem?.ToString() ?? "五号"];
         _styleConfig.Heading4.SpaceBefore = (double)nudHeading4SpaceBefore.Value;
         _styleConfig.Heading4.SpaceAfter = (double)nudHeading4SpaceAfter.Value;
         _styleConfig.Heading4.LineSpacing = (double)nudHeading4LineSpacing.Value;
+        _styleConfig.Heading4.Bold = chkHeading4Bold.Checked;
 
         _styleConfig.Normal.FontName = cmbNormalFont.SelectedItem?.ToString() ?? "宋体";
         _styleConfig.Normal.FontSize = _fontSizeMap[cmbNormalSize.SelectedItem?.ToString() ?? "五号"];

@@ -41,6 +41,8 @@ partial class Form1
     private System.Windows.Forms.NumericUpDown nudHeading1SpaceAfter;
     private System.Windows.Forms.NumericUpDown nudHeading1LineSpacing = new NumericUpDown();
     private System.Windows.Forms.Label lblHeading1LineSpacing = new Label();
+    private System.Windows.Forms.CheckBox chkHeading1Bold;
+    private System.Windows.Forms.Label lblHeading1Bold;
 
     // Heading 2 Controls
     private System.Windows.Forms.ComboBox cmbHeading2Font;
@@ -49,6 +51,8 @@ partial class Form1
     private System.Windows.Forms.NumericUpDown nudHeading2SpaceAfter;
     private System.Windows.Forms.NumericUpDown nudHeading2LineSpacing = new NumericUpDown();
     private System.Windows.Forms.Label lblHeading2LineSpacing = new Label();
+    private System.Windows.Forms.CheckBox chkHeading2Bold;
+    private System.Windows.Forms.Label lblHeading2Bold;
 
     // Heading 3 Controls
     private System.Windows.Forms.ComboBox cmbHeading3Font;
@@ -57,6 +61,8 @@ partial class Form1
     private System.Windows.Forms.NumericUpDown nudHeading3SpaceAfter;
     private System.Windows.Forms.NumericUpDown nudHeading3LineSpacing = new NumericUpDown();
     private System.Windows.Forms.Label lblHeading3LineSpacing = new Label();
+    private System.Windows.Forms.CheckBox chkHeading3Bold;
+    private System.Windows.Forms.Label lblHeading3Bold;
 
     // Heading 4 Controls
     private System.Windows.Forms.ComboBox cmbHeading4Font;
@@ -65,6 +71,8 @@ partial class Form1
     private System.Windows.Forms.NumericUpDown nudHeading4SpaceAfter;
     private System.Windows.Forms.NumericUpDown nudHeading4LineSpacing = new NumericUpDown();
     private System.Windows.Forms.Label lblHeading4LineSpacing = new Label();
+    private System.Windows.Forms.CheckBox chkHeading4Bold;
+    private System.Windows.Forms.Label lblHeading4Bold;
 
     // Normal Controls
     private System.Windows.Forms.ComboBox cmbNormalFont;
@@ -113,6 +121,8 @@ partial class Form1
         nudHeading1SpaceAfter = new NumericUpDown();
         lblHeading1LineSpacing = new Label();
         nudHeading1LineSpacing = new NumericUpDown();
+        lblHeading1Bold = new Label();
+        chkHeading1Bold = new CheckBox();
         grpHeading2 = new GroupBox();
         lblHeading2Font = new Label();
         cmbHeading2Font = new ComboBox();
@@ -124,6 +134,8 @@ partial class Form1
         nudHeading2SpaceAfter = new NumericUpDown();
         lblHeading2LineSpacing = new Label();
         nudHeading2LineSpacing = new NumericUpDown();
+        lblHeading2Bold = new Label();
+        chkHeading2Bold = new CheckBox();
         grpHeading3 = new GroupBox();
         lblHeading3Font = new Label();
         cmbHeading3Font = new ComboBox();
@@ -135,6 +147,8 @@ partial class Form1
         nudHeading3SpaceAfter = new NumericUpDown();
         lblHeading3LineSpacing = new Label();
         nudHeading3LineSpacing = new NumericUpDown();
+        lblHeading3Bold = new Label();
+        chkHeading3Bold = new CheckBox();
         grpHeading4 = new GroupBox();
         lblHeading4Font = new Label();
         cmbHeading4Font = new ComboBox();
@@ -146,6 +160,8 @@ partial class Form1
         nudHeading4SpaceAfter = new NumericUpDown();
         lblHeading4LineSpacing = new Label();
         nudHeading4LineSpacing = new NumericUpDown();
+        lblHeading4Bold = new Label();
+        chkHeading4Bold = new CheckBox();
         grpNormal = new GroupBox();
         lblNormalFont = new Label();
         cmbNormalFont = new ComboBox();
@@ -264,10 +280,12 @@ partial class Form1
         grpHeading1.Controls.Add(nudHeading1SpaceAfter);
         grpHeading1.Controls.Add(lblHeading1LineSpacing);
         grpHeading1.Controls.Add(nudHeading1LineSpacing);
+        grpHeading1.Controls.Add(lblHeading1Bold);
+        grpHeading1.Controls.Add(chkHeading1Bold);
         grpHeading1.Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Bold);
         grpHeading1.Location = new Point(12, 12);
         grpHeading1.Name = "grpHeading1";
-        grpHeading1.Size = new Size(956, 65);
+        grpHeading1.Size = new Size(1027, 66);
         grpHeading1.TabIndex = 0;
         grpHeading1.TabStop = false;
         grpHeading1.Text = "一级标题";
@@ -358,6 +376,24 @@ partial class Form1
         nudHeading1LineSpacing.TabIndex = 9;
         nudHeading1LineSpacing.Value = new decimal(new int[] { 24, 0, 0, 0 });
         // 
+        // lblHeading1Bold
+        // 
+        lblHeading1Bold.AutoSize = true;
+        lblHeading1Bold.Location = new Point(929, 25);
+        lblHeading1Bold.Name = "lblHeading1Bold";
+        lblHeading1Bold.Size = new Size(35, 17);
+        lblHeading1Bold.TabIndex = 10;
+        lblHeading1Bold.Text = "加粗:";
+        // 
+        // chkHeading1Bold
+        // 
+        chkHeading1Bold.AutoSize = true;
+        chkHeading1Bold.Location = new Point(976, 27);
+        chkHeading1Bold.Name = "chkHeading1Bold";
+        chkHeading1Bold.Size = new Size(15, 14);
+        chkHeading1Bold.TabIndex = 11;
+        chkHeading1Bold.UseVisualStyleBackColor = true;
+        // 
         // grpHeading2
         // 
         grpHeading2.Controls.Add(lblHeading2Font);
@@ -370,10 +406,12 @@ partial class Form1
         grpHeading2.Controls.Add(nudHeading2SpaceAfter);
         grpHeading2.Controls.Add(lblHeading2LineSpacing);
         grpHeading2.Controls.Add(nudHeading2LineSpacing);
+        grpHeading2.Controls.Add(lblHeading2Bold);
+        grpHeading2.Controls.Add(chkHeading2Bold);
         grpHeading2.Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Bold);
-        grpHeading2.Location = new Point(12, 83);
+        grpHeading2.Location = new Point(12, 84);
         grpHeading2.Name = "grpHeading2";
-        grpHeading2.Size = new Size(956, 65);
+        grpHeading2.Size = new Size(1027, 65);
         grpHeading2.TabIndex = 1;
         grpHeading2.TabStop = false;
         grpHeading2.Text = "二级标题";
@@ -464,6 +502,24 @@ partial class Form1
         nudHeading2LineSpacing.TabIndex = 9;
         nudHeading2LineSpacing.Value = new decimal(new int[] { 24, 0, 0, 0 });
         // 
+        // lblHeading2Bold
+        // 
+        lblHeading2Bold.AutoSize = true;
+        lblHeading2Bold.Location = new Point(929, 23);
+        lblHeading2Bold.Name = "lblHeading2Bold";
+        lblHeading2Bold.Size = new Size(35, 17);
+        lblHeading2Bold.TabIndex = 10;
+        lblHeading2Bold.Text = "加粗:";
+        // 
+        // chkHeading2Bold
+        // 
+        chkHeading2Bold.AutoSize = true;
+        chkHeading2Bold.Location = new Point(976, 25);
+        chkHeading2Bold.Name = "chkHeading2Bold";
+        chkHeading2Bold.Size = new Size(15, 14);
+        chkHeading2Bold.TabIndex = 11;
+        chkHeading2Bold.UseVisualStyleBackColor = true;
+        // 
         // grpHeading3
         // 
         grpHeading3.Controls.Add(lblHeading3Font);
@@ -476,10 +532,12 @@ partial class Form1
         grpHeading3.Controls.Add(nudHeading3SpaceAfter);
         grpHeading3.Controls.Add(lblHeading3LineSpacing);
         grpHeading3.Controls.Add(nudHeading3LineSpacing);
+        grpHeading3.Controls.Add(lblHeading3Bold);
+        grpHeading3.Controls.Add(chkHeading3Bold);
         grpHeading3.Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Bold);
-        grpHeading3.Location = new Point(12, 154);
+        grpHeading3.Location = new Point(12, 160);
         grpHeading3.Name = "grpHeading3";
-        grpHeading3.Size = new Size(956, 65);
+        grpHeading3.Size = new Size(1027, 65);
         grpHeading3.TabIndex = 2;
         grpHeading3.TabStop = false;
         grpHeading3.Text = "三级标题 ";
@@ -570,6 +628,24 @@ partial class Form1
         nudHeading3LineSpacing.TabIndex = 9;
         nudHeading3LineSpacing.Value = new decimal(new int[] { 24, 0, 0, 0 });
         // 
+        // lblHeading3Bold
+        // 
+        lblHeading3Bold.AutoSize = true;
+        lblHeading3Bold.Location = new Point(929, 28);
+        lblHeading3Bold.Name = "lblHeading3Bold";
+        lblHeading3Bold.Size = new Size(35, 17);
+        lblHeading3Bold.TabIndex = 10;
+        lblHeading3Bold.Text = "加粗:";
+        // 
+        // chkHeading3Bold
+        // 
+        chkHeading3Bold.AutoSize = true;
+        chkHeading3Bold.Location = new Point(976, 30);
+        chkHeading3Bold.Name = "chkHeading3Bold";
+        chkHeading3Bold.Size = new Size(15, 14);
+        chkHeading3Bold.TabIndex = 11;
+        chkHeading3Bold.UseVisualStyleBackColor = true;
+        // 
         // grpHeading4
         // 
         grpHeading4.Controls.Add(lblHeading4Font);
@@ -582,10 +658,12 @@ partial class Form1
         grpHeading4.Controls.Add(nudHeading4SpaceAfter);
         grpHeading4.Controls.Add(lblHeading4LineSpacing);
         grpHeading4.Controls.Add(nudHeading4LineSpacing);
+        grpHeading4.Controls.Add(lblHeading4Bold);
+        grpHeading4.Controls.Add(chkHeading4Bold);
         grpHeading4.Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Bold);
-        grpHeading4.Location = new Point(12, 225);
+        grpHeading4.Location = new Point(12, 232);
         grpHeading4.Name = "grpHeading4";
-        grpHeading4.Size = new Size(956, 65);
+        grpHeading4.Size = new Size(1027, 66);
         grpHeading4.TabIndex = 3;
         grpHeading4.TabStop = false;
         grpHeading4.Text = "四级标题 ";
@@ -675,6 +753,24 @@ partial class Form1
         nudHeading4LineSpacing.TabIndex = 9;
         nudHeading4LineSpacing.Value = new decimal(new int[] { 24, 0, 0, 0 });
         // 
+        // lblHeading4Bold
+        // 
+        lblHeading4Bold.AutoSize = true;
+        lblHeading4Bold.Location = new Point(929, 27);
+        lblHeading4Bold.Name = "lblHeading4Bold";
+        lblHeading4Bold.Size = new Size(35, 17);
+        lblHeading4Bold.TabIndex = 10;
+        lblHeading4Bold.Text = "加粗:";
+        // 
+        // chkHeading4Bold
+        // 
+        chkHeading4Bold.AutoSize = true;
+        chkHeading4Bold.Location = new Point(976, 29);
+        chkHeading4Bold.Name = "chkHeading4Bold";
+        chkHeading4Bold.Size = new Size(15, 14);
+        chkHeading4Bold.TabIndex = 11;
+        chkHeading4Bold.UseVisualStyleBackColor = true;
+        // 
         // grpNormal
         // 
         grpNormal.Controls.Add(lblNormalFont);
@@ -684,9 +780,9 @@ partial class Form1
         grpNormal.Controls.Add(lblNormalLineSpacing);
         grpNormal.Controls.Add(nudNormalLineSpacing);
         grpNormal.Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Bold);
-        grpNormal.Location = new Point(12, 435);
+        grpNormal.Location = new Point(12, 441);
         grpNormal.Name = "grpNormal";
-        grpNormal.Size = new Size(956, 50);
+        grpNormal.Size = new Size(1026, 50);
         grpNormal.TabIndex = 4;
         grpNormal.TabStop = false;
         grpNormal.Text = "正文段落";
@@ -727,7 +823,7 @@ partial class Form1
         // 
         // lblNormalLineSpacing
         // 
-        lblNormalLineSpacing.Location = new Point(441, 19);
+        lblNormalLineSpacing.Location = new Point(777, 19);
         lblNormalLineSpacing.Name = "lblNormalLineSpacing";
         lblNormalLineSpacing.Size = new Size(58, 20);
         lblNormalLineSpacing.TabIndex = 4;
@@ -737,7 +833,7 @@ partial class Form1
         // 
         nudNormalLineSpacing.DecimalPlaces = 1;
         nudNormalLineSpacing.Increment = new decimal(new int[] { 5, 0, 0, 65536 });
-        nudNormalLineSpacing.Location = new Point(518, 17);
+        nudNormalLineSpacing.Location = new Point(841, 17);
         nudNormalLineSpacing.Name = "nudNormalLineSpacing";
         nudNormalLineSpacing.Size = new Size(60, 23);
         nudNormalLineSpacing.TabIndex = 5;
@@ -754,9 +850,9 @@ partial class Form1
         grpTableCaption.Controls.Add(lblTableCaptionBold);
         grpTableCaption.Controls.Add(chkTableCaptionBold);
         grpTableCaption.Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Bold);
-        grpTableCaption.Location = new Point(12, 297);
+        grpTableCaption.Location = new Point(12, 304);
         grpTableCaption.Name = "grpTableCaption";
-        grpTableCaption.Size = new Size(956, 65);
+        grpTableCaption.Size = new Size(1026, 65);
         grpTableCaption.TabIndex = 5;
         grpTableCaption.TabStop = false;
         grpTableCaption.Text = "表格标题";
@@ -815,7 +911,7 @@ partial class Form1
         // lblTableCaptionBold
         // 
         lblTableCaptionBold.AutoSize = true;
-        lblTableCaptionBold.Location = new Point(614, 25);
+        lblTableCaptionBold.Location = new Point(929, 26);
         lblTableCaptionBold.Name = "lblTableCaptionBold";
         lblTableCaptionBold.Size = new Size(35, 17);
         lblTableCaptionBold.TabIndex = 6;
@@ -824,7 +920,7 @@ partial class Form1
         // chkTableCaptionBold
         // 
         chkTableCaptionBold.AutoSize = true;
-        chkTableCaptionBold.Location = new Point(661, 27);
+        chkTableCaptionBold.Location = new Point(976, 28);
         chkTableCaptionBold.Name = "chkTableCaptionBold";
         chkTableCaptionBold.Size = new Size(15, 14);
         chkTableCaptionBold.TabIndex = 7;
@@ -837,7 +933,7 @@ partial class Form1
         txtFileName.Location = new Point(332, 18);
         txtFileName.Name = "txtFileName";
         txtFileName.ReadOnly = true;
-        txtFileName.Size = new Size(659, 23);
+        txtFileName.Size = new Size(706, 23);
         txtFileName.TabIndex = 3;
         txtFileName.Text = "未选择文件";
         // 
@@ -851,13 +947,13 @@ partial class Form1
         txtLog.Name = "txtLog";
         txtLog.ReadOnly = true;
         txtLog.ScrollBars = ScrollBars.Vertical;
-        txtLog.Size = new Size(978, 141);
+        txtLog.Size = new Size(1034, 100);
         txtLog.TabIndex = 0;
         // 
         // lblStatus
         // 
         lblStatus.ForeColor = Color.FromArgb(16, 142, 234);
-        lblStatus.Location = new Point(12, 782);
+        lblStatus.Location = new Point(11, 765);
         lblStatus.Name = "lblStatus";
         lblStatus.Size = new Size(290, 20);
         lblStatus.TabIndex = 1;
@@ -874,7 +970,7 @@ partial class Form1
         // 
         progressBar.Location = new Point(3, 8);
         progressBar.Name = "progressBar";
-        progressBar.Size = new Size(978, 17);
+        progressBar.Size = new Size(1018, 21);
         progressBar.Style = ProgressBarStyle.Continuous;
         progressBar.TabIndex = 3;
         progressBar.Visible = false;
@@ -899,7 +995,7 @@ partial class Form1
         topPanel.Controls.Add(txtFileName);
         topPanel.Location = new Point(12, 12);
         topPanel.Name = "topPanel";
-        topPanel.Size = new Size(1004, 60);
+        topPanel.Size = new Size(1093, 60);
         topPanel.TabIndex = 0;
         // 
         // stylePanel
@@ -916,7 +1012,7 @@ partial class Form1
         stylePanel.Controls.Add(grpImageCaption);
         stylePanel.Location = new Point(12, 78);
         stylePanel.Name = "stylePanel";
-        stylePanel.Size = new Size(1004, 501);
+        stylePanel.Size = new Size(1093, 508);
         stylePanel.TabIndex = 1;
         // 
         // grpImageCaption
@@ -930,9 +1026,9 @@ partial class Form1
         grpImageCaption.Controls.Add(lblImageCaptionBold);
         grpImageCaption.Controls.Add(chkImageCaptionBold);
         grpImageCaption.Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Bold);
-        grpImageCaption.Location = new Point(13, 363);
+        grpImageCaption.Location = new Point(12, 375);
         grpImageCaption.Name = "grpImageCaption";
-        grpImageCaption.Size = new Size(955, 65);
+        grpImageCaption.Size = new Size(1026, 60);
         grpImageCaption.TabIndex = 6;
         grpImageCaption.TabStop = false;
         grpImageCaption.Text = "图形标题";
@@ -990,7 +1086,7 @@ partial class Form1
         // 
         // lblImageCaptionBold
         // 
-        lblImageCaptionBold.Location = new Point(613, 23);
+        lblImageCaptionBold.Location = new Point(929, 24);
         lblImageCaptionBold.Name = "lblImageCaptionBold";
         lblImageCaptionBold.Size = new Size(45, 20);
         lblImageCaptionBold.TabIndex = 6;
@@ -998,7 +1094,7 @@ partial class Form1
         // 
         // chkImageCaptionBold
         // 
-        chkImageCaptionBold.Location = new Point(660, 25);
+        chkImageCaptionBold.Location = new Point(976, 26);
         chkImageCaptionBold.Name = "chkImageCaptionBold";
         chkImageCaptionBold.Size = new Size(15, 14);
         chkImageCaptionBold.TabIndex = 7;
@@ -1028,9 +1124,9 @@ partial class Form1
         logPanel.BorderStyle = BorderStyle.FixedSingle;
         logPanel.Controls.Add(progressBar);
         logPanel.Controls.Add(txtLog);
-        logPanel.Location = new Point(13, 585);
+        logPanel.Location = new Point(13, 602);
         logPanel.Name = "logPanel";
-        logPanel.Size = new Size(1003, 182);
+        logPanel.Size = new Size(1092, 152);
         logPanel.TabIndex = 3;
         // 
         // Form1
@@ -1039,7 +1135,7 @@ partial class Form1
         AutoScaleDimensions = new SizeF(96F, 96F);
         AutoScaleMode = AutoScaleMode.Dpi;
         BackColor = Color.FromArgb(243, 243, 243);
-        ClientSize = new Size(1057, 808);
+        ClientSize = new Size(1153, 805);
         Controls.Add(topPanel);
         Controls.Add(lblStatus);
         Controls.Add(stylePanel);
@@ -1053,18 +1149,22 @@ partial class Form1
         Text = "Word 文档排版工具";
         Load += Form1_Load;
         grpHeading1.ResumeLayout(false);
+        grpHeading1.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)nudHeading1SpaceBefore).EndInit();
         ((System.ComponentModel.ISupportInitialize)nudHeading1SpaceAfter).EndInit();
         ((System.ComponentModel.ISupportInitialize)nudHeading1LineSpacing).EndInit();
         grpHeading2.ResumeLayout(false);
+        grpHeading2.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)nudHeading2SpaceBefore).EndInit();
         ((System.ComponentModel.ISupportInitialize)nudHeading2SpaceAfter).EndInit();
         ((System.ComponentModel.ISupportInitialize)nudHeading2LineSpacing).EndInit();
         grpHeading3.ResumeLayout(false);
+        grpHeading3.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)nudHeading3SpaceBefore).EndInit();
         ((System.ComponentModel.ISupportInitialize)nudHeading3SpaceAfter).EndInit();
         ((System.ComponentModel.ISupportInitialize)nudHeading3LineSpacing).EndInit();
         grpHeading4.ResumeLayout(false);
+        grpHeading4.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)nudHeading4SpaceBefore).EndInit();
         ((System.ComponentModel.ISupportInitialize)nudHeading4SpaceAfter).EndInit();
         ((System.ComponentModel.ISupportInitialize)nudHeading4LineSpacing).EndInit();

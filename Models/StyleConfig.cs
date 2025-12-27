@@ -8,22 +8,22 @@ namespace WordTools2.Models
         /// <summary>
         /// 一级标题样式
         /// </summary>
-        public ParagraphStyle Heading1 { get; set; } = new ParagraphStyle("黑体", 16, 24, 24, 24);
+        public ParagraphStyle Heading1 { get; set; } = new ParagraphStyle("黑体", 16, 24, 24, 24, 0, false);
 
         /// <summary>
         /// 二级标题样式
         /// </summary>
-        public ParagraphStyle Heading2 { get; set; } = new ParagraphStyle("楷体", 14, 12, 12, 24);
+        public ParagraphStyle Heading2 { get; set; } = new ParagraphStyle("楷体", 14, 12, 12, 24, 1, false);
 
         /// <summary>
         /// 三级标题样式
         /// </summary>
-        public ParagraphStyle Heading3 { get; set; } = new ParagraphStyle("宋体", 13, 12, 12, 24);
+        public ParagraphStyle Heading3 { get; set; } = new ParagraphStyle("宋体", 13, 12, 12, 24, 2, false);
 
         /// <summary>
         /// 四级标题样式
         /// </summary>
-        public ParagraphStyle Heading4 { get; set; } = new ParagraphStyle("宋体", 12, 0, 0, 24);
+        public ParagraphStyle Heading4 { get; set; } = new ParagraphStyle("宋体", 12, 0, 0, 24, 3, false);
 
         /// <summary>
         /// 正文样式

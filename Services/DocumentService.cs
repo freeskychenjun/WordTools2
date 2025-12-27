@@ -315,7 +315,7 @@ namespace WordTools2.Services
                     stats["Normal"]++;
                 }
                 // 识别表格标题：以"表"开头，可能包含编号的段落
-                else if (Regex.IsMatch(text, @"^表\d*(\.\d+)*\s*[\u4e00-\u9fa5].*$"))
+                else if (Regex.IsMatch(text, @"^表\d*(\.\d+)*(-\d+)*\s*[\u4e00-\u9fa5].*$"))
                 {
                     stats["TableCaption"]++; // 表格标题
                 }
@@ -618,8 +618,8 @@ namespace WordTools2.Services
             }
 
             // 识别表格标题：以"表"开头，可能包含编号的段落
-            // 规则：以"表"开头，后跟数字编号（可选），然后是空格和中文内容
-            if (Regex.IsMatch(text, @"^表\d*(\.\d+)*\s*[\u4e00-\u9fa5].*$"))
+            // 规则：以"表"开头，后跟数字编号（可选），可能包含连字符编号，然后是空格和中文内容
+            if (Regex.IsMatch(text, @"^表\d*(\.\d+)*(-\d+)*\s*[\u4e00-\u9fa5].*$"))
             {
                 return "TableCaption"; // 表格标题
             }
@@ -1062,8 +1062,8 @@ namespace WordTools2.Services
             }
 
             // 识别表格标题：以"表"开头，可能包含编号的段落
-            // 规则：以"表"开头，后跟数字编号（可选），然后是空格和中文内容
-            return Regex.IsMatch(text, @"^表\d*(\.\d+)*\s*[\u4e00-\u9fa5].*$");
+            // 规则：以"表"开头，后跟数字编号（可选），可能包含连字符编号，然后是空格和中文内容
+            return Regex.IsMatch(text, @"^表\d*(\.\d+)*(-\d+)*\s*[\u4e00-\u9fa5].*$");
         }
 
         /// <summary>

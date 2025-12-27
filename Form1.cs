@@ -55,7 +55,7 @@ public partial class Form1 : Form
         this.DragEnter += Form1_DragEnter;
         this.DragDrop += Form1_DragDrop;
     }
-    
+
     /// <summary>
     /// 从配置文件加载样式配置
     /// </summary>
@@ -82,21 +82,25 @@ public partial class Form1 : Form
         cmbHeading1Size.SelectedItem = GetChineseFontSize(_styleConfig.Heading1.FontSize);
         nudHeading1SpaceBefore.Value = (decimal)_styleConfig.Heading1.SpaceBefore;
         nudHeading1SpaceAfter.Value = (decimal)_styleConfig.Heading1.SpaceAfter;
+        nudHeading1LineSpacing.Value = (decimal)_styleConfig.Heading1.LineSpacing;
 
         cmbHeading2Font.SelectedItem = _styleConfig.Heading2.FontName;
         cmbHeading2Size.SelectedItem = GetChineseFontSize(_styleConfig.Heading2.FontSize);
         nudHeading2SpaceBefore.Value = (decimal)_styleConfig.Heading2.SpaceBefore;
         nudHeading2SpaceAfter.Value = (decimal)_styleConfig.Heading2.SpaceAfter;
+        nudHeading2LineSpacing.Value = (decimal)_styleConfig.Heading2.LineSpacing;
 
         cmbHeading3Font.SelectedItem = _styleConfig.Heading3.FontName;
         cmbHeading3Size.SelectedItem = GetChineseFontSize(_styleConfig.Heading3.FontSize);
         nudHeading3SpaceBefore.Value = (decimal)_styleConfig.Heading3.SpaceBefore;
         nudHeading3SpaceAfter.Value = (decimal)_styleConfig.Heading3.SpaceAfter;
+        nudHeading3LineSpacing.Value = (decimal)_styleConfig.Heading3.LineSpacing;
 
         cmbHeading4Font.SelectedItem = _styleConfig.Heading4.FontName;
         cmbHeading4Size.SelectedItem = GetChineseFontSize(_styleConfig.Heading4.FontSize);
         nudHeading4SpaceBefore.Value = (decimal)_styleConfig.Heading4.SpaceBefore;
         nudHeading4SpaceAfter.Value = (decimal)_styleConfig.Heading4.SpaceAfter;
+        nudHeading4LineSpacing.Value = (decimal)_styleConfig.Heading4.LineSpacing;
 
         cmbNormalFont.SelectedItem = _styleConfig.Normal.FontName;
         cmbNormalSize.SelectedItem = GetChineseFontSize(_styleConfig.Normal.FontSize);
@@ -105,24 +109,24 @@ public partial class Form1 : Form
         // 表格标题配置
         cmbTableCaptionFont.SelectedItem = _styleConfig.TableCaption.FontName;
         cmbTableCaptionSize.SelectedItem = GetChineseFontSize(_styleConfig.TableCaption.FontSize);
-        
+
         // 设置大纲级别
         int outlineLevel = _styleConfig.TableCaption.OutlineLevel;
         if (outlineLevel < 0) outlineLevel = 9; // 确保有效值
         cmbTableCaptionOutlineLevel.SelectedIndex = outlineLevel + 1; // +1因为第0项是"无(正文)"
-        
+
         // 设置加粗
         chkTableCaptionBold.Checked = _styleConfig.TableCaption.Bold;
-        
+
         // 图形标题配置
         cmbImageCaptionFont.SelectedItem = _styleConfig.ImageCaption.FontName;
         cmbImageCaptionSize.SelectedItem = GetChineseFontSize(_styleConfig.ImageCaption.FontSize);
-        
+
         // 设置大纲级别
         int imageOutlineLevel = _styleConfig.ImageCaption.OutlineLevel;
         if (imageOutlineLevel < 0) imageOutlineLevel = 9; // 确保有效值
         cmbImageCaptionOutlineLevel.SelectedIndex = imageOutlineLevel + 1; // +1因为第0项是"无(正文)"
-        
+
         // 设置加粗
         chkImageCaptionBold.Checked = _styleConfig.ImageCaption.Bold;
     }
@@ -212,12 +216,12 @@ public partial class Form1 : Form
                 LogMessage($"  三级标题: {stats["Heading3"]}");
                 LogMessage($"  四级标题: {stats["Heading4"]}");
                 LogMessage($"  表格标题: {stats["TableCaption"]}");
-                
+
                 if (stats["Other"] > 0)
                     LogMessage($"  其他格式: {stats["Other"]}");
 
                 LogMessage("说明: 仅通过正则表达式识别段落类型并应用格式");
-                LogMessage("原始文档未被修改");
+
             }
         }
         catch (Exception ex)
@@ -255,8 +259,8 @@ public partial class Form1 : Form
 
                 this.Invoke((MethodInvoker)delegate
                 {
-                    MessageBox.Show("格式应用成功！原始文档未被修改，段落样式保持不变。", "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    lblStatus.Text = "处理完成（格式已应用，样式保持原样）";
+                    MessageBox.Show("格式应用成功！", "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    lblStatus.Text = "处理完成";
                     lblProgress.Text = "";
                     progressBar.Visible = false;
                     btnApply.Enabled = true;
@@ -323,21 +327,25 @@ public partial class Form1 : Form
         _styleConfig.Heading1.FontSize = _fontSizeMap[cmbHeading1Size.SelectedItem?.ToString() ?? "三号"];
         _styleConfig.Heading1.SpaceBefore = (double)nudHeading1SpaceBefore.Value;
         _styleConfig.Heading1.SpaceAfter = (double)nudHeading1SpaceAfter.Value;
+        _styleConfig.Heading1.LineSpacing = (double)nudHeading1LineSpacing.Value;
 
         _styleConfig.Heading2.FontName = cmbHeading2Font.SelectedItem?.ToString() ?? "Microsoft YaHei UI";
         _styleConfig.Heading2.FontSize = _fontSizeMap[cmbHeading2Size.SelectedItem?.ToString() ?? "四号"];
         _styleConfig.Heading2.SpaceBefore = (double)nudHeading2SpaceBefore.Value;
         _styleConfig.Heading2.SpaceAfter = (double)nudHeading2SpaceAfter.Value;
+        _styleConfig.Heading2.LineSpacing = (double)nudHeading2LineSpacing.Value;
 
         _styleConfig.Heading3.FontName = cmbHeading3Font.SelectedItem?.ToString() ?? "Microsoft YaHei UI";
         _styleConfig.Heading3.FontSize = _fontSizeMap[cmbHeading3Size.SelectedItem?.ToString() ?? "小四"];
         _styleConfig.Heading3.SpaceBefore = (double)nudHeading3SpaceBefore.Value;
         _styleConfig.Heading3.SpaceAfter = (double)nudHeading3SpaceAfter.Value;
+        _styleConfig.Heading3.LineSpacing = (double)nudHeading3LineSpacing.Value;
 
         _styleConfig.Heading4.FontName = cmbHeading4Font.SelectedItem?.ToString() ?? "Microsoft YaHei UI";
         _styleConfig.Heading4.FontSize = _fontSizeMap[cmbHeading4Size.SelectedItem?.ToString() ?? "五号"];
         _styleConfig.Heading4.SpaceBefore = (double)nudHeading4SpaceBefore.Value;
         _styleConfig.Heading4.SpaceAfter = (double)nudHeading4SpaceAfter.Value;
+        _styleConfig.Heading4.LineSpacing = (double)nudHeading4LineSpacing.Value;
 
         _styleConfig.Normal.FontName = cmbNormalFont.SelectedItem?.ToString() ?? "宋体";
         _styleConfig.Normal.FontSize = _fontSizeMap[cmbNormalSize.SelectedItem?.ToString() ?? "五号"];
@@ -346,24 +354,24 @@ public partial class Form1 : Form
         // 表格标题配置
         _styleConfig.TableCaption.FontName = cmbTableCaptionFont.SelectedItem?.ToString() ?? "黑体";
         _styleConfig.TableCaption.FontSize = _fontSizeMap[cmbTableCaptionSize.SelectedItem?.ToString() ?? "五号"];
-        
+
         // 设置大纲级别
         int outlineLevel = cmbTableCaptionOutlineLevel.SelectedIndex - 1; // -1因为第0项是"无(正文)"
         if (outlineLevel < 0) outlineLevel = 9; // 如果选择"无(正文)"，设置为9
         _styleConfig.TableCaption.OutlineLevel = outlineLevel;
-        
+
         // 设置加粗
         _styleConfig.TableCaption.Bold = chkTableCaptionBold.Checked;
-        
+
         // 图形标题配置
         _styleConfig.ImageCaption.FontName = cmbImageCaptionFont.SelectedItem?.ToString() ?? "黑体";
         _styleConfig.ImageCaption.FontSize = _fontSizeMap[cmbImageCaptionSize.SelectedItem?.ToString() ?? "五号"];
-        
+
         // 设置大纲级别
         int imageOutlineLevel = cmbImageCaptionOutlineLevel.SelectedIndex - 1; // -1因为第0项是"无(正文)"
         if (imageOutlineLevel < 0) imageOutlineLevel = 9; // 如果选择"无(正文)"，设置为9
         _styleConfig.ImageCaption.OutlineLevel = imageOutlineLevel;
-        
+
         // 设置加粗
         _styleConfig.ImageCaption.Bold = chkImageCaptionBold.Checked;
     }
@@ -401,6 +409,16 @@ public partial class Form1 : Form
     }
 
     private void Form1_Load(object sender, EventArgs e)
+    {
+
+    }
+
+    private void btnSave_Click_1(object sender, EventArgs e)
+    {
+
+    }
+
+    private void lblHeading4Before_Click(object sender, EventArgs e)
     {
 
     }

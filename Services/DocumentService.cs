@@ -405,10 +405,11 @@ namespace WordTools2.Services
             paraCTP2.pPr.spacing.before = (ulong)(styleConfig.SpaceBefore * 20); // NPOI使用缇单位
             paraCTP2.pPr.spacing.after = (ulong)(styleConfig.SpaceAfter * 20); // NPOI使用缇单位
             
-            // 只对正文段落设置行距，标题段落保持原有行距
-            if (styleName == "Normal" && styleConfig.LineSpacing > 0)
+            // 对标题和正文段落都设置行距
+            if (styleConfig.LineSpacing > 0)
             {
-                paraCTP2.pPr.spacing.line = ((int)(styleConfig.LineSpacing * 20)).ToString(); // NPOI使用缇单位
+                // 将磅值转换为缇单位（1磅 = 20缇）
+                paraCTP2.pPr.spacing.line = ((int)(styleConfig.LineSpacing * 20)).ToString();
                 paraCTP2.pPr.spacing.lineRule = NPOI.OpenXmlFormats.Wordprocessing.ST_LineSpacingRule.exact;
             }
 

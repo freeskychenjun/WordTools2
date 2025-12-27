@@ -28,7 +28,7 @@ namespace WordTools2.Models
         /// <summary>
         /// 行距（磅）
         /// </summary>
-        public double LineSpacing { get; set; } = 0;
+        public double LineSpacing { get; set; } = 24;
 
         /// <summary>
         /// 大纲级别（0-9，其中9表示正文级别）

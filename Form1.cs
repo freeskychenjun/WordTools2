@@ -224,7 +224,7 @@ public partial class Form1 : Form
                 if (stats["Other"] > 0)
                     LogMessage($"  其他格式: {stats["Other"]}");
 
-                LogMessage("说明: 仅通过正则表达式识别段落类型并应用格式");
+                LogMessage("说明: 优先使用样式大纲级别判断，样式无法判断时使用正则表达式补充");
 
             }
         }

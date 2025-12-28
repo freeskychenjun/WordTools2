@@ -133,6 +133,9 @@ public partial class Form1 : Form
 
         // 设置加粗
         chkImageCaptionBold.Checked = _styleConfig.ImageCaption.Bold;
+
+        // 跳过页面设置
+        nudSkipPages.Value = _styleConfig.SkipPages;
     }
 
     /// <summary>
@@ -382,6 +385,9 @@ public partial class Form1 : Form
 
         // 设置加粗
         _styleConfig.ImageCaption.Bold = chkImageCaptionBold.Checked;
+
+        // 跳过页面设置
+        _styleConfig.SkipPages = (int)nudSkipPages.Value;
     }
 
     private void UpdateProgress(string progress)

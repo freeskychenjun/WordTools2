@@ -101,6 +101,11 @@ partial class Form1
     private System.Windows.Forms.Label lblImageCaptionOutlineLevel;
     private System.Windows.Forms.Label lblImageCaptionBold;
 
+    // Skip Pages Controls
+    private System.Windows.Forms.GroupBox grpSkipPages;
+    private System.Windows.Forms.Label lblSkipPages;
+    private System.Windows.Forms.NumericUpDown nudSkipPages;
+
     // Open/Save Dialogs
     private System.Windows.Forms.OpenFileDialog openFileDialog;
     private System.Windows.Forms.SaveFileDialog saveFileDialog;
@@ -196,6 +201,9 @@ partial class Form1
         cmbImageCaptionOutlineLevel = new ComboBox();
         lblImageCaptionBold = new Label();
         chkImageCaptionBold = new CheckBox();
+        grpSkipPages = new GroupBox();
+        lblSkipPages = new Label();
+        nudSkipPages = new NumericUpDown();
         statusPanel = new Panel();
         lblStatusTitle = new Label();
         logPanel = new Panel();
@@ -221,6 +229,8 @@ partial class Form1
         topPanel.SuspendLayout();
         stylePanel.SuspendLayout();
         grpImageCaption.SuspendLayout();
+        grpSkipPages.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)nudSkipPages).BeginInit();
         statusPanel.SuspendLayout();
         logPanel.SuspendLayout();
         SuspendLayout();
@@ -953,7 +963,7 @@ partial class Form1
         // lblStatus
         // 
         lblStatus.ForeColor = Color.FromArgb(16, 142, 234);
-        lblStatus.Location = new Point(11, 765);
+        lblStatus.Location = new Point(17, 826);
         lblStatus.Name = "lblStatus";
         lblStatus.Size = new Size(290, 20);
         lblStatus.TabIndex = 1;
@@ -1008,11 +1018,12 @@ partial class Form1
         stylePanel.Controls.Add(grpHeading3);
         stylePanel.Controls.Add(grpHeading4);
         stylePanel.Controls.Add(grpNormal);
+        stylePanel.Controls.Add(grpSkipPages);
         stylePanel.Controls.Add(grpTableCaption);
         stylePanel.Controls.Add(grpImageCaption);
         stylePanel.Location = new Point(12, 78);
         stylePanel.Name = "stylePanel";
-        stylePanel.Size = new Size(1093, 508);
+        stylePanel.Size = new Size(1093, 558);
         stylePanel.TabIndex = 1;
         // 
         // grpImageCaption
@@ -1100,6 +1111,36 @@ partial class Form1
         chkImageCaptionBold.TabIndex = 7;
         chkImageCaptionBold.UseVisualStyleBackColor = true;
         // 
+        // grpSkipPages
+        // 
+        grpSkipPages.Controls.Add(lblSkipPages);
+        grpSkipPages.Controls.Add(nudSkipPages);
+        grpSkipPages.Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Bold);
+        grpSkipPages.Location = new Point(13, 497);
+        grpSkipPages.Name = "grpSkipPages";
+        grpSkipPages.Size = new Size(1026, 50);
+        grpSkipPages.TabIndex = 7;
+        grpSkipPages.TabStop = false;
+        grpSkipPages.Text = "跳过页面设置";
+        // 
+        // lblSkipPages
+        // 
+        lblSkipPages.AutoSize = true;
+        lblSkipPages.Font = new Font("Microsoft YaHei UI", 9F);
+        lblSkipPages.Location = new Point(12, 22);
+        lblSkipPages.Name = "lblSkipPages";
+        lblSkipPages.Size = new Size(236, 17);
+        lblSkipPages.TabIndex = 0;
+        lblSkipPages.Text = "跳过前几页（封面、目录等不进行排版）：";
+        // 
+        // nudSkipPages
+        // 
+        nudSkipPages.Location = new Point(280, 20);
+        nudSkipPages.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
+        nudSkipPages.Name = "nudSkipPages";
+        nudSkipPages.Size = new Size(80, 23);
+        nudSkipPages.TabIndex = 1;
+        // 
         // statusPanel
         // 
         statusPanel.BackColor = Color.FromArgb(255, 255, 255);
@@ -1124,7 +1165,7 @@ partial class Form1
         logPanel.BorderStyle = BorderStyle.FixedSingle;
         logPanel.Controls.Add(progressBar);
         logPanel.Controls.Add(txtLog);
-        logPanel.Location = new Point(13, 602);
+        logPanel.Location = new Point(12, 657);
         logPanel.Name = "logPanel";
         logPanel.Size = new Size(1092, 152);
         logPanel.TabIndex = 3;
@@ -1135,7 +1176,7 @@ partial class Form1
         AutoScaleDimensions = new SizeF(96F, 96F);
         AutoScaleMode = AutoScaleMode.Dpi;
         BackColor = Color.FromArgb(243, 243, 243);
-        ClientSize = new Size(1153, 805);
+        ClientSize = new Size(1153, 855);
         Controls.Add(topPanel);
         Controls.Add(lblStatus);
         Controls.Add(stylePanel);
@@ -1143,7 +1184,7 @@ partial class Form1
         Controls.Add(logPanel);
         Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 134);
         MaximizeBox = false;
-        MinimumSize = new Size(900, 800);
+        MinimumSize = new Size(900, 850);
         Name = "Form1";
         StartPosition = FormStartPosition.CenterScreen;
         Text = "Word 文档排版工具";
@@ -1176,6 +1217,9 @@ partial class Form1
         topPanel.PerformLayout();
         stylePanel.ResumeLayout(false);
         grpImageCaption.ResumeLayout(false);
+        grpSkipPages.ResumeLayout(false);
+        grpSkipPages.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)nudSkipPages).EndInit();
         statusPanel.ResumeLayout(false);
         logPanel.ResumeLayout(false);
         logPanel.PerformLayout();

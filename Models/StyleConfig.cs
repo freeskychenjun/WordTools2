@@ -35,11 +35,16 @@ namespace WordTools2.Models
         /// </summary>
         public ParagraphStyle TableCaption { get; set; } = new ParagraphStyle("黑体", 10.5, 0, 0, 24, 8, false);
 
-        /// <summary>
-        /// 图形标题样式
-        /// </summary>
-        public ParagraphStyle ImageCaption { get; set; } = new ParagraphStyle("黑体", 10.5, 0, 0, 24, 6, false);
+    /// <summary>
+    /// 图形标题样式
+    /// </summary>
+    public ParagraphStyle ImageCaption { get; set; } = new ParagraphStyle("黑体", 10.5, 0, 0, 24, 6, false);
 
-        public StyleConfig() { }
-    }
+    /// <summary>
+    /// 跳过的页数（封面、目录等不需要排版的页面）
+    /// </summary>
+    public int SkipPages { get; set; } = 0;
+
+    public StyleConfig() { }
+}
 }

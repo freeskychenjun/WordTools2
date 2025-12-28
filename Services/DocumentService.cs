@@ -120,12 +120,36 @@ namespace WordTools2.Services
                         // 诊断：检查原始文档的样式定义
                         CheckOriginalDocumentStyles(wordDoc, logMessage);
 
+                        // 计算需要跳过的段落数量（基于分页符）
+                        int skipParagraphs = 0;
+                        if (config.SkipPages > 0)
+                        {
+                            skipParagraphs = CountParagraphsToSkip(wordDoc, body, config.SkipPages);
+                            if (skipParagraphs > 0)
+                            {
+                                logMessage($"跳过前 {config.SkipPages} 页，共 {skipParagraphs} 个段落");
+                            }
+                            else
+                            {
+                                logMessage($"警告：未能检测到 {config.SkipPages} 个分页符/分节符，可能存在自然分页。已设置为不跳过任何段落，请手动调整跳过页数或检查文档中的分页符/分节符。");
+                            }
+                        }
+
                         var paragraphs = body.Elements<Paragraph>().ToList();
-                        int total = paragraphs.Count;
+                        int total = paragraphs.Count - skipParagraphs;
                         int processed = 0;
 
+                        // 从指定位置开始处理段落
+                        int paragraphIndex = 0;
                         foreach (var paragraph in paragraphs)
                         {
+                            // 跳过前几页的段落
+                            if (paragraphIndex < skipParagraphs)
+                            {
+                                paragraphIndex++;
+                                continue;
+                            }
+
                             // 通过 Open XML SDK 获取实际样式名称
                             var actualStyleInfo = GetParagraphStyleInfo(wordDoc, paragraph);
 
@@ -197,6 +221,8 @@ namespace WordTools2.Services
                                 var percent = (int)((double)processed / total * 100);
                                 updateProgress($"处理中... {percent}%");
                             }
+
+                            paragraphIndex++;
                         }
 
                         // 处理表格格式设置
@@ -207,7 +233,7 @@ namespace WordTools2.Services
 
                         logMessage($"已处理 {total} 个段落");
                         logMessage("文档已保存，所有格式更改已提交");
-                    }
+                    } // end using (wordDoc)
 
                     // 重新打开处理后的工作文件（只读模式）
                     _document = WordprocessingDocument.Open(_workingFilePath, false);
@@ -215,7 +241,7 @@ namespace WordTools2.Services
 
                     updateProgress("处理完成 100%");
                     logMessage("样式应用成功（原始文档未被修改）");
-                }
+                } // end inner try
                 catch
                 {
                     // 如果出错，清理工作文件
@@ -225,8 +251,8 @@ namespace WordTools2.Services
                         _workingFilePath = null;
                     }
                     throw;
-                }
-            }
+                } // end catch of inner try
+            } // end outer try
             catch (Exception ex)
             {
                 throw new Exception($"应用样式失败: {ex.Message}");
@@ -551,6 +577,149 @@ namespace WordTools2.Services
             // 但为了保持一致性，我们仍然记录日志
             string displayText = text.Length > 30 ? text.Substring(0, 30) + "..." : text;
             logMessage($"图片段落处理完成: 包含图片的段落，文本内容: \"{displayText}\"");
+        }
+
+        /// <summary>
+        /// 计算需要跳过的段落数量（基于分页符和分节符）
+        /// </summary>
+        private int CountParagraphsToSkip(WordprocessingDocument wordDoc, Body body, int skipPages)
+        {
+            if (skipPages <= 0)
+                return 0;
+
+            int pageBreaksFound = 0;
+            int paragraphsToSkip = 0;
+
+            // 遍历段落，统计分页符和分节符
+            foreach (var paragraph in body.Elements<Paragraph>())
+            {
+                bool hasPageBreak = false;
+
+                // 检查段落是否包含分页符
+                if (ContainsPageBreak(paragraph))
+                {
+                    hasPageBreak = true;
+                    pageBreaksFound++;
+
+                    // 当找到足够的分页符时停止
+                    if (pageBreaksFound >= skipPages)
+                    {
+                        // 跳过分页符所在的段落及其之后的所有段落
+                        paragraphsToSkip++;
+                        break;
+                    }
+                }
+
+                // 检查段落是否是分节符开始（新的节从下一页开始）
+                var sectionBreak = GetSectionBreak(paragraph);
+                if (sectionBreak != null)
+                {
+                    // 检查是否是"下一页"分节符
+                    if (IsNextPageSectionBreak(sectionBreak))
+                    {
+                        pageBreaksFound++;
+
+                        // 当找到足够的分页符时停止
+                        if (pageBreaksFound >= skipPages)
+                        {
+                            // 跳过分节符所在的段落及其之后的所有段落
+                            paragraphsToSkip++;
+                            break;
+                        }
+                    }
+                }
+
+                paragraphsToSkip++;
+            }
+
+            // 如果文档中没有足够的分页符/分节符（可能是自然分页），返回0不跳过
+            // 让用户自己判断是否需要调整
+            if (pageBreaksFound < skipPages)
+            {
+                // 如果检测到的分页符/分节符少于用户设置的跳过页数
+                // 可能存在自然分页，返回0避免跳过多内容
+                return 0;
+            }
+
+            return paragraphsToSkip;
+        }
+
+        /// <summary>
+        /// 检查段落是否包含分页符
+        /// </summary>
+        private bool ContainsPageBreak(Paragraph paragraph)
+        {
+            try
+            {
+                var paragraphProperties = paragraph.ParagraphProperties;
+                if (paragraphProperties == null)
+                    return false;
+
+                // 检查段落属性中的分页符
+                var runs = paragraph.Elements<Run>().ToList();
+                foreach (var run in runs)
+                {
+                    // 检查运行中的分页符
+                    var breakElements = run.Elements<Break>().ToList();
+                    foreach (var breakElement in breakElements)
+                    {
+                        // 检查是否为分页符（Type属性为null或"page"）
+                        if (breakElement.Type == null || breakElement.Type.Value == BreakValues.Page)
+                        {
+                            return true;
+                        }
+                    }
+                }
+
+                return false;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 获取段落的分节符信息
+        /// </summary>
+        private SectionProperties? GetSectionBreak(Paragraph paragraph)
+        {
+            try
+            {
+                var paragraphProperties = paragraph.ParagraphProperties;
+                if (paragraphProperties == null)
+                    return null;
+
+                var sectionProperties = paragraphProperties.SectionProperties;
+                if (sectionProperties == null)
+                    return null;
+
+                return sectionProperties;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 判断分节符是否是"下一页"类型（相当于分页符）
+        /// </summary>
+        private bool IsNextPageSectionBreak(SectionProperties sectionBreak)
+        {
+            try
+            {
+                // 检查 SectionType 子元素
+                var sectionType = sectionBreak.Elements<SectionType>().FirstOrDefault();
+                if (sectionType == null || sectionType.Val == null)
+                    return true; // 默认认为是分页
+
+                return sectionType.Val.Value == SectionMarkValues.NextPage;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         /// <summary>

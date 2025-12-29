@@ -1320,7 +1320,7 @@ namespace WordTools2.Services
         /// </summary>
         private bool IsTableCaptionByPattern(string text)
         {
-            return Regex.IsMatch(text, @"^\s*表(?=\s|\d)\s*\d*(\.\d+)*(-\s*\d+)*\s*[\u4e00-\u9fa5].*$");
+            return Regex.IsMatch(text, @"^\s*表(?=\s|\d)\s*\d*(\.\d+)*(-\s*\d+)*\s+.*$");
         }
 
         /// <summary>
